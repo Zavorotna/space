@@ -16,6 +16,7 @@ class ShopController extends Controller
 
     public function show(ShopProduct $product)
     {
+        $product->load('media');
         return view('shop.show', compact('product'));
     }
 
@@ -88,11 +89,11 @@ class ShopController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price_coins' => 'required|integer|min:0',
-            'price_uah' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'photos.*' => 'nullable|image|max:5120',
         ]);
 
+        $validated['price_uah'] = $validated['price_coins'];
         $product = ShopProduct::create($validated);
 
         if ($request->hasFile('photos')) {
@@ -116,10 +117,10 @@ class ShopController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price_coins' => 'required|integer|min:0',
-            'price_uah' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);
+        $validated['price_uah'] = $validated['price_coins'];
         $product->update($validated);
         return back()->with('success', 'Товар оновлено.');
     }

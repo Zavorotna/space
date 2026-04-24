@@ -1,9 +1,11 @@
 @extends('layouts.app')
 @section('title', 'Створення курсу')
 @section('content')
+<a href="{{ route('teacher.courses.index') }}">&larr; Курси</a>
 <h1>Створення курсу</h1>
 <form method="POST" action="{{ route('teacher.courses.store') }}" enctype="multipart/form-data">
     @csrf
+    <div><label><input type="checkbox" name="is_template" value="1" @checked(old('is_template'))> Зберегти як шаблон</label></div>
     <div><label>Фото курсу</label><input type="file" name="cover" accept="image/*"></div>
     <div><label>Назва курсу</label><input type="text" name="title" value="{{ old('title') }}" required></div>
     <div><label>Опис курсу</label><textarea name="description">{{ old('description') }}</textarea></div>
@@ -13,7 +15,7 @@
     </div>
     <div><label>Ціна (грн)</label><input type="number" name="price" step="0.01" value="{{ old('price', 0) }}"></div>
     <div><label>Період оплати</label>
-        <select name="billing_period"><option value="monthly">Щомісячно</option><option value="one_time">Разово</option></select>
+        <select name="billing_period"><option value="monthly">Щомісячно</option><option value="one_time">Разово</option><option value="per_lesson">За заняття</option></select>
     </div>
     <div><label>Telegram посилання</label><input type="url" name="telegram_link" value="{{ old('telegram_link') }}"></div>
     <div><label>Дата відкритого заняття</label><input type="date" name="intro_date" value="{{ old('intro_date') }}"></div>

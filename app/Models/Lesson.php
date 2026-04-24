@@ -9,6 +9,7 @@ class Lesson extends Model
     protected $fillable = [
         'course_id', 'teacher_id', 'title', 'mode', 'location_id', 'classroom_id',
         'date', 'start_time', 'end_time', 'attendance_confirmed', 'notification_sent',
+        'completion_status', 'actual_minutes', 'completion_note', 'completion_noted_at', 'makeup_for_lesson_id',
     ];
 
     protected function casts(): array
@@ -17,6 +18,7 @@ class Lesson extends Model
             'date' => 'date',
             'attendance_confirmed' => 'boolean',
             'notification_sent' => 'boolean',
+            'completion_noted_at' => 'datetime',
         ];
     }
 
@@ -25,6 +27,23 @@ class Lesson extends Model
     public function location() { return $this->belongsTo(Location::class); }
     public function classroom() { return $this->belongsTo(Classroom::class); }
     public function attendances() { return $this->hasMany(Attendance::class); }
+    public function makeupFor() { return $this->belongsTo(Lesson::class, 'makeup_for_lesson_id'); }
+    public function makeupLesson() { return $this->hasOne(Lesson::class, 'makeup_for_lesson_id'); }
+
+    public function plannedMinutes(): int
+    {
+        if (!$this->start_time || !$this->end_time) {
+            return 120;
+        }
+        $diff = (int) \Carbon\Carbon::parse($this->start_time)->diffInMinutes(\Carbon\Carbon::parse($this->end_time));
+        return $diff > 0 ? $diff : 120;
+    }
+
+    public function needsCompletionReport(): bool
+    {
+        $endAt = \Carbon\Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->end_time);
+        return $endAt->isPast() && is_null($this->completion_status);
+    }
 
     /**
      * Check for scheduling conflicts (same classroom/time or same teacher/time)

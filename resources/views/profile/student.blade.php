@@ -16,6 +16,37 @@
     @endif
 </div>
 
+{{-- Parents --}}
+@if($user->parents->count())
+    <h2>Батьки</h2>
+    @foreach($user->parents as $parent)
+        <div>
+            <a href="{{ route('profile.show', $parent) }}">{{ $parent->last_name }} {{ $parent->first_name }}</a>
+            @if($parent->phone) — {{ $parent->phone }} @endif
+        </div>
+    @endforeach
+@endif
+
+{{-- Courses --}}
+@if($user->enrollments->count())
+    <h2>Курси</h2>
+    @foreach($user->enrollments as $course)
+        <div>
+            <strong>{{ $course->title }}</strong>
+            —
+            @switch($course->pivot->status)
+                @case('active') Активний @break
+                @case('completed') Завершений @break
+                @case('pending') Очікує @break
+                @default {{ $course->pivot->status }}
+            @endswitch
+            @if($course->start_date || $course->end_date)
+                ({{ $course->start_date?->format('d.m.Y') ?? '?' }} — {{ $course->end_date?->format('d.m.Y') ?? '?' }})
+            @endif
+        </div>
+    @endforeach
+@endif
+
 {{-- Certificates --}}
 @if($user->certificates->count())
     <h2>Сертифікати</h2>

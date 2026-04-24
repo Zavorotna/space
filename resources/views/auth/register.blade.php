@@ -15,4 +15,15 @@
 <p>зареєструватися через</p>
 <a href="{{ route('auth.google') }}">Google</a>
 <p>Маєш акаунт? <a href="{{ route('login') }}">Увійти</a></p>
+
+<script>
+setInterval(function () {
+    fetch('/csrf-token')
+        .then(r => r.json())
+        .then(data => {
+            document.querySelectorAll('input[name="_token"]').forEach(el => el.value = data.token);
+            window.csrfToken = data.token;
+        });
+}, 10 * 60 * 1000);
+</script>
 @endsection

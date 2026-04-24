@@ -22,6 +22,9 @@
 </div>
 
 <h2>Транзакції</h2>
+@if($transactions->isEmpty())
+    <p>Транзакцій ще немає.</p>
+@else
 <table>
     <thead><tr><th>Дата</th><th>Опис</th><th>Сума</th></tr></thead>
     <tbody>
@@ -35,4 +38,5 @@
     </tbody>
 </table>
 {{ $transactions->links() }}
+@endif
 @endsection

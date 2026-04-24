@@ -12,7 +12,7 @@
 
 <table>
     <thead>
-        <tr><th>ID</th><th>Назва</th><th>Монети</th><th>Грн</th><th>Склад</th><th>Активний</th><th>Дії</th></tr>
+        <tr><th>ID</th><th>Назва</th><th>HC</th><th>Склад</th><th>Активний</th><th>Дії</th></tr>
     </thead>
     <tbody>
     @foreach($products as $product)
@@ -20,7 +20,6 @@
             <td>{{ $product->id }}</td>
             <td>{{ $product->title }}</td>
             <td>{{ $product->price_coins }}</td>
-            <td>{{ $product->price_uah }}</td>
             <td>{{ $product->stock }}</td>
             <td>{{ $product->is_active ? '✅' : '❌' }}</td>
             <td>
@@ -28,7 +27,6 @@
                     @csrf @method('PUT')
                     <input type="text" name="title" value="{{ $product->title }}" size="15">
                     <input type="number" name="price_coins" value="{{ $product->price_coins }}" size="5">
-                    <input type="number" name="price_uah" value="{{ $product->price_uah }}" step="0.01" size="5">
                     <input type="number" name="stock" value="{{ $product->stock }}" size="5">
                     <input type="hidden" name="description" value="{{ $product->description }}">
                     <label>

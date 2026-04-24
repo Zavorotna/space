@@ -10,7 +10,7 @@
     <h2><a href="{{ route('courses.detail', $course) }}">{{ $course->title }}</a></h2>
     <p>{{ Str::limit($course->description, 150) }}</p>
     <p>Викладач: {{ $course->teacher->full_name }}</p>
-    <p>Ціна: {{ $course->price }} грн/{{ $course->billing_period === 'monthly' ? 'міс' : 'разово' }}</p>
+    <p>Ціна: {{ $course->price }} грн/{{ ['monthly' => 'міс', 'one_time' => 'разово', 'per_lesson' => 'заняття'][$course->billing_period] ?? $course->billing_period }}</p>
     <p>Статус: {{ $course->status }}</p>
 </div>
 <hr>

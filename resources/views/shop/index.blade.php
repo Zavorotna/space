@@ -4,6 +4,13 @@
 @section('content')
 <h1>Магазин</h1>
 
+@if(auth()->user()->isAdmin())
+    <div>
+        <a href="{{ route('admin.shop.create') }}">+ Додати товар</a>
+        <a href="{{ route('admin.shop.index') }}">Управління товарами</a>
+    </div>
+@endif
+
 @if($products->isEmpty())
     <p>Наразі товарів немає.</p>
 @else
@@ -16,8 +23,7 @@
             <h3>{{ $product->title }}</h3>
             <p>{{ Str::limit($product->description, 80) }}</p>
             <p>
-                <strong>{{ $product->price_coins }} монет</strong>
-                / {{ $product->price_uah }} грн
+                <strong title="1 Hashtag Coin = 1 грн">{{ $product->price_coins }} HC</strong>
             </p>
             <p>На складі: {{ $product->stock }}</p>
             <a href="{{ route('shop.show', $product) }}">Детальніше</a>

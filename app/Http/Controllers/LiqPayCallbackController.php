@@ -31,6 +31,12 @@ class LiqPayCallbackController extends Controller
             return response('ok');
         }
 
+        // Guard against duplicate callbacks
+        if (Transaction::where('liqpay_order_id', $orderId)->exists()) {
+            Log::info("LiqPay: duplicate callback for order {$orderId}, skipping");
+            return response('ok');
+        }
+
         // Parse order ID to determine type
         if (str_starts_with($orderId, 'topup_')) {
             $parts = explode('_', $orderId);
@@ -40,7 +46,6 @@ class LiqPayCallbackController extends Controller
                 app(WalletService::class)->deposit($user, $amount, $orderId, $status);
             }
         } elseif (str_starts_with($orderId, 'course_')) {
-            // Course payment handled via course_payment flow
             $parts = explode('_', $orderId);
             $courseId = $parts[1] ?? null;
             $userId = $parts[3] ?? null;
@@ -68,7 +73,7 @@ class LiqPayCallbackController extends Controller
             }
         } elseif (str_starts_with($orderId, 'shop_')) {
             $order = ShopOrder::where('liqpay_order_id', $orderId)->first();
-            if ($order) {
+            if ($order && $order->status !== 'paid') {
                 $order->update(['status' => 'paid']);
                 $order->product->decrement('stock', $order->quantity);
             }

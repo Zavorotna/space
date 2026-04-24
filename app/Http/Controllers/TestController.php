@@ -8,6 +8,31 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
+    public function index()
+    {
+        $user = auth()->user();
+
+        if ($user->isTeacher() || $user->isAdmin()) {
+            $tests = Test::whereHas('course', function ($q) use ($user) {
+                if (!$user->isAdmin()) {
+                    $q->where('teacher_id', $user->id);
+                }
+            })->with(['course', 'attempts'])->latest()->get();
+
+            $courses = \App\Models\Course::when(!$user->isAdmin(), fn($q) => $q->where('teacher_id', $user->id))
+                ->orderBy('title')->get();
+
+            return view('test.index', compact('tests', 'courses'));
+        }
+
+        // Student: tests from enrolled courses
+        $courseIds = $user->activeEnrollments()->pluck('courses.id');
+        $tests = Test::whereIn('course_id', $courseIds)->with(['course'])->get();
+        $attempts = $user->testAttempts()->whereIn('test_id', $tests->pluck('id'))->latest()->get()->groupBy('test_id');
+
+        return view('test.index', compact('tests', 'attempts'));
+    }
+
     // ── Teacher: manage tests ──────────────────────────────────
 
     public function store(Request $request, $courseId)
@@ -21,7 +46,7 @@ class TestController extends Controller
         $validated['course_id'] = $courseId;
         $test = Test::create($validated);
 
-        return redirect()->route('tests.edit', $test)->with('success', 'Тест створено.');
+        return redirect()->route('teacher.tests.edit', $test)->with('success', 'Тест створено.');
     }
 
     public function edit(Test $test)
@@ -119,6 +144,15 @@ class TestController extends Controller
     {
         $question->delete();
         return back()->with('success', 'Питання видалено.');
+    }
+
+    public function destroy(Test $test)
+    {
+        $courseId = $test->course_id;
+        $test->questions()->each(fn($q) => $q->options()->delete() && $q->delete());
+        $test->attempts()->delete();
+        $test->delete();
+        return redirect()->route('teacher.courses.edit', $courseId)->with('success', 'Тест видалено.');
     }
 
     // ── Student: take test ─────────────────────────────────────

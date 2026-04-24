@@ -1,32 +1,29 @@
 @extends('layouts.app')
 @section('title', 'Дашборд студента')
 @section('content')
-<h1>Поточний курс</h1>
+<h1>Дашборд</h1>
 
 @if($currentCourse)
-<div>
+<div style="margin-bottom:20px;">
     <h2>{{ $currentCourse->title }}</h2>
     <p>{{ $currentCourse->description }}</p>
     <p>Успішність: {{ $currentCourse->pivot->success_rate }}%</p>
-    <div>
-        <progress value="{{ $currentCourse->pivot->success_rate }}" max="100"></progress>
-    </div>
+    <progress value="{{ $currentCourse->pivot->success_rate }}" max="100"></progress>
     <p>Викладач: {{ $currentCourse->teacher->full_name }}</p>
     <a href="{{ route('courses.student.show', $currentCourse) }}">Детальніше</a>
 </div>
 @else
-<p>Ви не записані на жодний активний курс.</p>
-<a href="{{ route('courses.public') }}">Переглянути курси</a>
+<p>Ви не записані на жодний активний курс. <a href="{{ route('courses.public') }}">Переглянути курси</a></p>
 @endif
 
-<h2>Розклад занять</h2>
-@foreach($schedule as $lesson)
-<div>
-    <strong>{{ $lesson->date->format('D d.m') }}</strong>
-    {{ $lesson->start_time }} - {{ $lesson->end_time }}
-    {{ $lesson->course->title }}
-</div>
-@endforeach
+{{-- ── Calendar (read-only) ── --}}
+@include('partials._calendar', [
+    'schedDate'    => $schedDate,
+    'schedMode'    => $schedMode,
+    'schedLessons' => $schedLessons,
+    'schedEvents'  => $schedEvents,
+    'canEdit'      => false,
+])
 
 <h2>Домашні завдання</h2>
 <p>Здати: {{ $totalHomeworkToDo }} | На доопрацювання: {{ $pendingHomework }}</p>
@@ -59,6 +56,9 @@
 <a href="{{ route('wallet.withdraw') }}">Вивести</a>
 
 <h3>Транзакції</h3>
+@if($transactions->isEmpty())
+<p style="color:#aaa;">Немає транзакцій.</p>
+@else
 <table>
     <thead><tr><th>Дата</th><th>Опис</th><th>Сума</th></tr></thead>
     <tbody>
@@ -71,17 +71,5 @@
     @endforeach
     </tbody>
 </table>
+@endif
 @endsection
-
-@push('scripts')
-<script>
-// Student progress chart (minimal JS)
-document.addEventListener('DOMContentLoaded', function() {
-    const progressEl = document.querySelector('progress');
-    if (progressEl) {
-        const val = progressEl.value;
-        progressEl.title = val + '%';
-    }
-});
-</script>
-@endpush

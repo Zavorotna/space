@@ -93,6 +93,11 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(Course::class, 'teacher_id');
     }
 
+    public function coTeacherCourses()
+    {
+        return $this->belongsToMany(Course::class, 'course_co_teachers')->withTimestamps();
+    }
+
     public function enrollments()
     {
         return $this->belongsToMany(Course::class, 'course_user')

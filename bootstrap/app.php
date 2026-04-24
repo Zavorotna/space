@@ -14,7 +14,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'liqpay/callback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            $request->session()->regenerate();
+            return redirect()->route('login')
+                ->withErrors(['phone' => 'Сесія застаріла. Будь ласка, увійдіть знову.']);
+        });
     })->create();

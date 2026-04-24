@@ -40,6 +40,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+Route::get('/csrf-token', fn() => response()->json(['token' => csrf_token()]))->name('csrf.refresh');
 
 // ── Google OAuth ───────────────────────────────────────────────
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
@@ -113,6 +114,7 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::post('/homework-submission/{submission}/freeze', [HomeworkController::class, 'freezeDeadline'])->name('homework.freeze');
 
         // Tests (take)
+        Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
         Route::get('/tests/{test}', [TestController::class, 'show'])->name('tests.show');
         Route::post('/tests/{test}/start', [TestController::class, 'start'])->name('tests.start');
         Route::post('/test-attempts/{attempt}/submit', [TestController::class, 'submit'])->name('tests.submit');
@@ -161,7 +163,9 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':teacher,admin,superadmin')->prefix('teacher')->name('teacher.')->group(function () {
 
         // Courses
+        Route::get('/courses', [CourseController::class, 'teacherCourses'])->name('courses.index');
         Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
+        Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
         Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
         Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
         Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
@@ -171,6 +175,8 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::post('/courses/{course}/add-student', [CourseController::class, 'addStudent'])->name('courses.addStudent');
         Route::get('/courses/{course}/students', [CourseController::class, 'students'])->name('courses.students');
         Route::put('/courses/{course}/end-date', [CourseController::class, 'updateEndDate'])->name('courses.endDate');
+        Route::post('/courses/{course}/co-teachers', [CourseController::class, 'addCoTeacher'])->name('courses.coTeachers.add');
+        Route::delete('/courses/{course}/co-teachers/{user}', [CourseController::class, 'removeCoTeacher'])->name('courses.coTeachers.remove');
 
         // Homework
         Route::post('/courses/{course}/homework', [HomeworkController::class, 'store'])->name('homework.store');
@@ -186,6 +192,7 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::post('/tests/{test}/questions', [TestController::class, 'addQuestion'])->name('tests.addQuestion');
         Route::put('/test-questions/{question}', [TestController::class, 'updateQuestion'])->name('tests.updateQuestion');
         Route::delete('/test-questions/{question}', [TestController::class, 'deleteQuestion'])->name('tests.deleteQuestion');
+        Route::delete('/tests/{test}', [TestController::class, 'destroy'])->name('tests.destroy');
         Route::get('/tests/{test}/statistics', [TestController::class, 'statistics'])->name('tests.statistics');
 
         // Graduation projects
@@ -205,6 +212,11 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::put('/schedule/{lesson}', [ScheduleController::class, 'update'])->name('schedule.update');
         Route::delete('/schedule/{lesson}', [ScheduleController::class, 'destroy'])->name('schedule.destroy');
         Route::post('/schedule/{lesson}/attendance', [ScheduleController::class, 'confirmAttendance'])->name('schedule.attendance');
+        Route::post('/schedule/{lesson}/complete', [ScheduleController::class, 'reportCompletion'])->name('schedule.complete');
+
+        // Calendar events
+        Route::post('/events', [ScheduleController::class, 'storeEvent'])->name('events.store');
+        Route::delete('/events/{event}', [ScheduleController::class, 'destroyEvent'])->name('events.destroy');
     });
 
     // ═════════════════════════════════════════════════════════
@@ -214,10 +226,15 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::put('/users/{user}/role', [AdminController::class, 'updateUserRole'])->name('users.role');
         Route::post('/users/link-parent', [AdminController::class, 'linkParent'])->name('users.linkParent');
+        Route::delete('/users/{parent}/children/{child}', [AdminController::class, 'unlinkChild'])->name('users.unlinkChild');
 
         Route::get('/locations', [AdminController::class, 'locations'])->name('locations');
         Route::post('/locations', [AdminController::class, 'storeLocation'])->name('locations.store');
+        Route::put('/locations/{location}', [AdminController::class, 'updateLocation'])->name('locations.update');
+        Route::delete('/locations/{location}', [AdminController::class, 'destroyLocation'])->name('locations.destroy');
         Route::post('/locations/{location}/classrooms', [AdminController::class, 'storeClassroom'])->name('classrooms.store');
+        Route::put('/classrooms/{classroom}', [AdminController::class, 'updateClassroom'])->name('classrooms.update');
+        Route::delete('/classrooms/{classroom}', [AdminController::class, 'destroyClassroom'])->name('classrooms.destroy');
 
         // Shop management
         Route::get('/shop', [ShopController::class, 'adminIndex'])->name('shop.index');
@@ -238,6 +255,7 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::post('/withdrawals/{withdrawal}/reject', [WalletController::class, 'rejectWithdrawal'])->name('withdrawals.reject');
         Route::put('/courses/{course}/liqpay', [AdminController::class, 'courseLiqpay'])->name('courses.liqpay');
         Route::post('/users/{user}/toggle-trusted', [AdminController::class, 'toggleTrustedTeacher'])->name('users.toggleTrusted');
+        Route::get('/lesson-stats', [ScheduleController::class, 'lessonStats'])->name('lesson.stats');
     });
 
     // ═════════════════════════════════════════════════════════

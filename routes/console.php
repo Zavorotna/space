@@ -14,6 +14,7 @@ Schedule::command('birthdays:reward')->dailyAt('08:00');
 // Daily at midnight: VIP and resume expiration
 Schedule::command('vip:check')->daily();
 Schedule::command('resumes:expire')->daily();
+Schedule::command('courses:ending-soon')->dailyAt('09:00');
 
 // Monthly on 1st at midnight: leaderboard, referrals, attendance
 Schedule::command('leaderboard:calculate')->monthlyOn(1, '00:00');
@@ -32,6 +33,7 @@ Schedule::command('attendance:reward')->monthlyOn(1, '00:20');
  * 0 8 * * * php /path/artisan birthdays:reward
  * 0 0 * * * php /path/artisan vip:check
  * 0 0 * * * php /path/artisan resumes:expire
+ * 0 9 * * * php /path/artisan courses:ending-soon
  * 0 0 1 * * php /path/artisan leaderboard:calculate
  * 10 0 1 * * php /path/artisan referrals:reward
  * 20 0 1 * * php /path/artisan attendance:reward

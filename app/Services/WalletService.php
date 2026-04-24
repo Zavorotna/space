@@ -176,7 +176,7 @@ class WalletService
             ->where('status', 'pending')
             ->latest()
             ->first()
-            ?->update(['status' => 'completed', 'admin_note' => $note]);
+            ?->update(['status' => 'completed', 'description' => 'Видача готівки', 'admin_note' => $note]);
     }
 
     /**

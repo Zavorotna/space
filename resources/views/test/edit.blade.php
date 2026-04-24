@@ -24,6 +24,39 @@
     <button type="submit">Зберегти</button>
 </form>
 
+<form method="POST" action="{{ route('teacher.tests.destroy', $test) }}" id="delete-test-form" style="margin-top:10px;">
+    @csrf @method('DELETE')
+    <button type="button" onclick="showTestDeleteConfirm()">Видалити тест</button>
+</form>
+
+<div id="test-delete-confirm" style="display:none; border:1px solid red; padding:15px; margin-top:10px;">
+    <p><strong>Видалити тест «{{ $test->title }}»?</strong></p>
+    <p>Буде видалено {{ $test->questions->count() }} питань та всі результати студентів. Дія незворотна.</p>
+    <p>Введіть назву тесту для підтвердження:</p>
+    <input type="text" id="delete-test-input" placeholder="{{ $test->title }}">
+    <br><br>
+    <button type="button" id="confirm-delete-test-btn" disabled
+            onclick="document.getElementById('delete-test-form').submit()">Так, видалити</button>
+    <button type="button" onclick="hideTestDeleteConfirm()">Скасувати</button>
+</div>
+
+<script>
+function showTestDeleteConfirm() {
+    document.getElementById('test-delete-confirm').style.display = 'block';
+}
+function hideTestDeleteConfirm() {
+    document.getElementById('test-delete-confirm').style.display = 'none';
+    document.getElementById('delete-test-input').value = '';
+    document.getElementById('confirm-delete-test-btn').disabled = true;
+}
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('delete-test-input').addEventListener('input', function () {
+        document.getElementById('confirm-delete-test-btn').disabled =
+            this.value !== '{{ addslashes($test->title) }}';
+    });
+});
+</script>
+
 <hr>
 
 {{-- Existing questions --}}

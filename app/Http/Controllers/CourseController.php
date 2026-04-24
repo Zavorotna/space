@@ -15,6 +15,10 @@ class CourseController extends Controller
      */
     public function publicIndex()
     {
+        if (auth()->check() && (auth()->user()->isTeacher() || auth()->user()->isAdmin())) {
+            return redirect()->route('teacher.courses.index');
+        }
+
         $courses = Course::published()->group()
             ->with(['teacher', 'media'])
             ->withCount('reviews')
@@ -138,6 +142,29 @@ class CourseController extends Controller
     // ── Teacher/Admin actions ──────────────────────────────────
 
     /**
+     * Teacher/Admin: courses & templates list
+     */
+    public function teacherCourses()
+    {
+        $user = auth()->user();
+
+        if ($user->isAdmin()) {
+            $courses = Course::where('is_template', false)->with('teacher')->latest()->get();
+            $templates = Course::where('is_template', true)->with('teacher')->latest()->get();
+        } else {
+            $coTeachingIds = $user->coTeacherCourses()->pluck('courses.id');
+            $courses = Course::where('is_template', false)
+                ->where(fn($q) => $q->where('teacher_id', $user->id)->orWhereIn('id', $coTeachingIds))
+                ->with('teacher')->latest()->get();
+            $templates = Course::where('is_template', true)
+                ->where(fn($q) => $q->where('teacher_id', $user->id)->orWhereNull('teacher_id'))
+                ->latest()->get();
+        }
+
+        return view('teacher.courses', compact('courses', 'templates'));
+    }
+
+    /**
      * Teacher: create course form
      */
     public function create()
@@ -155,13 +182,14 @@ class CourseController extends Controller
             'description' => 'nullable|string',
             'program' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'billing_period' => 'required|in:one_time,monthly',
+            'billing_period' => 'required|in:one_time,monthly,per_lesson',
             'type' => 'required|in:group,individual',
             'intro_date' => 'nullable|date',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'telegram_link' => 'nullable|url',
             'has_graduation_project' => 'boolean',
+            'is_template' => 'boolean',
             'cover' => 'nullable|image|max:5120',
         ]);
 
@@ -169,13 +197,13 @@ class CourseController extends Controller
             ? $request->user()->id
             : $request->input('teacher_id', $request->user()->id);
 
-        $course = Course::create($validated);
+        $course = Course::create(collect($validated)->except('cover')->toArray());
 
         if ($request->hasFile('cover')) {
             $course->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
 
-        return redirect()->route('courses.edit', $course)->with('success', 'Курс створено.');
+        return redirect()->route('teacher.courses.edit', $course)->with('success', 'Курс створено.');
     }
 
     /**
@@ -184,8 +212,10 @@ class CourseController extends Controller
     public function edit(Course $course)
     {
         $this->authorizeCourse($course);
-        $course->load(['homeworkAssignments', 'tests.questions.options', 'graduationProject', 'additionalMaterials']);
-        return view('teacher.course-edit', compact('course'));
+        $course->load(['homeworkAssignments', 'tests.questions.options', 'graduationProject', 'additionalMaterials', 'coTeachers',
+            'students' => fn($q) => $q->withPivot(['status', 'is_paid', 'enrolled_at', 'active_until'])]);
+        $teachers = \App\Models\User::whereIn('role', ['teacher', 'admin', 'superadmin'])->orderBy('last_name')->get();
+        return view('teacher.course-edit', compact('course', 'teachers'));
     }
 
     /**
@@ -195,12 +225,12 @@ class CourseController extends Controller
     {
         $this->authorizeCourse($course);
 
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'program' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'billing_period' => 'required|in:one_time,monthly',
+            'billing_period' => 'required|in:one_time,monthly,per_lesson',
             'status' => 'required|in:waiting,enrolling,active,completed',
             'type' => 'required|in:group,individual',
             'intro_date' => 'nullable|date',
@@ -210,15 +240,50 @@ class CourseController extends Controller
             'has_graduation_project' => 'boolean',
             'is_published' => 'boolean',
             'cover' => 'nullable|image|max:5120',
-        ]);
+        ];
 
-        $course->update($validated);
+        if ($request->user()->isAdmin()) {
+            $rules['teacher_id'] = 'nullable|exists:users,id';
+        }
+
+        $validated = $request->validate($rules);
+
+        $oldTeacherId = $course->teacher_id;
+        $course->update(collect($validated)->except('cover')->toArray());
+
+        // Notify teacher if assigned or changed
+        if ($request->user()->isAdmin()
+            && isset($validated['teacher_id'])
+            && $validated['teacher_id']
+            && $validated['teacher_id'] != $oldTeacherId
+        ) {
+            $teacher = \App\Models\User::find($validated['teacher_id']);
+            if ($teacher) {
+                app(\App\Services\NotificationService::class)->notify(
+                    $teacher,
+                    'course_assigned',
+                    'Вас призначено викладачем курсу',
+                    "Курс: {$course->title}",
+                    route('teacher.courses.edit', $course)
+                );
+            }
+        }
 
         if ($request->hasFile('cover')) {
             $course->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
 
-        return back()->with('success', 'Курс оновлено.');
+        return redirect()->route('teacher.courses.edit', $course)->with('success', 'Курс оновлено.');
+    }
+
+    public function destroy(Course $course)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403);
+        }
+
+        $course->delete();
+        return redirect()->route('teacher.courses.index')->with('success', 'Курс видалено.');
     }
 
     /**
@@ -228,7 +293,7 @@ class CourseController extends Controller
     {
         $this->authorizeCourse($course);
         $newCourse = $course->duplicateAsTemplate();
-        return redirect()->route('courses.edit', $newCourse)->with('success', 'Курс скопійовано.');
+        return redirect()->route('teacher.courses.edit', $newCourse)->with('success', 'Курс скопійовано.');
     }
 
     /**
@@ -318,6 +383,40 @@ class CourseController extends Controller
         return back()->with('success', 'Дату завершення оновлено.');
     }
 
+    public function addCoTeacher(Request $request, Course $course)
+    {
+        $this->authorizeCourse($course);
+        $request->validate(['user_id' => 'required|exists:users,id']);
+
+        $user = User::find($request->user_id);
+        if (!$user || !in_array($user->role, ['teacher', 'admin', 'superadmin'])) {
+            return back()->with('error', 'Користувач не є викладачем.');
+        }
+
+        if ($course->coTeachers()->where('user_id', $user->id)->exists()) {
+            return back()->with('error', 'Цей викладач вже є співвикладачем.');
+        }
+
+        $course->coTeachers()->attach($user->id);
+
+        app(\App\Services\NotificationService::class)->notify(
+            $user,
+            'course_assigned',
+            'Вас додано як співвикладача курсу',
+            "Курс: {$course->title}",
+            route('teacher.courses.edit', $course)
+        );
+
+        return back()->with('success', "Викладача {$user->last_name} {$user->first_name} додано.");
+    }
+
+    public function removeCoTeacher(Course $course, User $user)
+    {
+        $this->authorizeCourse($course);
+        $course->coTeachers()->detach($user->id);
+        return back()->with('success', 'Співвикладача видалено.');
+    }
+
     // ── LiqPay payment for course ──────────────────────────────
 
     public function payForm(Course $course)
@@ -370,6 +469,7 @@ class CourseController extends Controller
         $user = auth()->user();
         if ($user->isSuperAdmin() || $user->isAdmin()) return;
         if ($user->isTeacher() && $course->teacher_id === $user->id) return;
+        if ($user->isTeacher() && $course->coTeachers()->where('user_id', $user->id)->exists()) return;
         abort(403);
     }
 

@@ -23,7 +23,7 @@
         <select name="course_id">
             <option value="">— без курсу —</option>
             @foreach(auth()->user()->taughtCourses ?? [] as $course)
-                <option value="{{ $course->id }}">{{ $course->title }}</option>
+                <option value="{{ $course->id }}">{{ $course->title }}{{ $course->is_template ? ' (шаблон)' : '' }}</option>
             @endforeach
         </select>
     </div>

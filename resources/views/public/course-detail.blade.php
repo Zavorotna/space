@@ -11,7 +11,7 @@
     <div>{!! nl2br(e($course->program)) !!}</div>
 @endif
 <p>Викладач: {{ $course->teacher->full_name }}</p>
-<p>Ціна: {{ $course->price }} грн/{{ $course->billing_period === 'monthly' ? 'міс' : 'разово' }}</p>
+<p>Ціна: {{ $course->price }} грн/{{ ['monthly' => 'міс', 'one_time' => 'разово', 'per_lesson' => 'заняття'][$course->billing_period] ?? $course->billing_period }}</p>
 <p>Дата початку: {{ $course->start_date?->format('d.m.Y') ?? 'Не визначено' }}</p>
 <p>Статус: {{ $course->status }}</p>
 

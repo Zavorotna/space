@@ -50,33 +50,76 @@ class AdminController extends Controller
         return back()->with('success', "Зв'язок батько-дитина створено.");
     }
 
+    public function unlinkChild(User $parent, User $child)
+    {
+        $parent->children()->detach($child->id);
+        return back()->with('success', "Зв'язок скасовано.");
+    }
+
     // ── Locations & Classrooms ─────────────────────────────────
     public function locations()
     {
         $locations = Location::with('classrooms')->get();
-        return view('admin.locations', compact('locations'));
+        $cities = Location::whereNotNull('city')->where('city', '!=', '')->pluck('city')->unique()->values();
+        return view('admin.locations', compact('locations', 'cities'));
     }
 
     public function storeLocation(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'nullable|string',
+            'name'       => 'required|string|max:255',
+            'city'       => 'nullable|string|max:255',
+            'street'     => 'nullable|string|max:255',
             'work_start' => 'required|date_format:H:i',
-            'work_end' => 'required|date_format:H:i|after:work_start',
+            'work_end'   => 'required|date_format:H:i',
         ]);
         Location::create($validated);
         return back()->with('success', 'Локацію створено.');
     }
 
+    public function updateLocation(Request $request, Location $location)
+    {
+        $validated = $request->validate([
+            'name'       => 'required|string|max:255',
+            'city'       => 'nullable|string|max:255',
+            'street'     => 'nullable|string|max:255',
+            'work_start' => 'required|date_format:H:i',
+            'work_end'   => 'required|date_format:H:i',
+        ]);
+        $location->update($validated);
+        return back()->with('success', 'Локацію оновлено.');
+    }
+
+    public function destroyLocation(Location $location)
+    {
+        $location->delete();
+        return back()->with('success', 'Локацію видалено.');
+    }
+
     public function storeClassroom(Request $request, Location $location)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'     => 'required|string|max:255',
             'capacity' => 'nullable|integer|min:1',
         ]);
         $location->classrooms()->create($validated);
         return back()->with('success', 'Аудиторію створено.');
+    }
+
+    public function updateClassroom(Request $request, Classroom $classroom)
+    {
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'capacity' => 'nullable|integer|min:1',
+        ]);
+        $classroom->update($validated);
+        return back()->with('success', 'Аудиторію оновлено.');
+    }
+
+    public function destroyClassroom(Classroom $classroom)
+    {
+        $classroom->delete();
+        return back()->with('success', 'Аудиторію видалено.');
     }
 
     // ── Course FOP settings ────────────────────────────────────

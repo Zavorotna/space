@@ -16,7 +16,7 @@ class Course extends Model implements HasMedia
         'title', 'description', 'program', 'teacher_id', 'price', 'billing_period',
         'status', 'type', 'intro_date', 'start_date', 'end_date', 'telegram_link',
         'liqpay_merchant_id', 'liqpay_private_key', 'has_graduation_project',
-        'template_id', 'is_published',
+        'template_id', 'is_published', 'is_template',
     ];
 
     protected function casts(): array
@@ -27,6 +27,7 @@ class Course extends Model implements HasMedia
             'end_date' => 'date',
             'price' => 'decimal:2',
             'is_published' => 'boolean',
+            'is_template' => 'boolean',
             'has_graduation_project' => 'boolean',
         ];
     }
@@ -94,6 +95,11 @@ class Course extends Model implements HasMedia
         return $this->hasMany(Certificate::class);
     }
 
+    public function coTeachers()
+    {
+        return $this->belongsToMany(User::class, 'course_co_teachers')->withTimestamps();
+    }
+
     public function template()
     {
         return $this->belongsTo(Course::class, 'template_id');
@@ -125,6 +131,7 @@ class Course extends Model implements HasMedia
         $new->template_id = $this->id;
         $new->status = 'waiting';
         $new->is_published = false;
+        $new->is_template = false;
         $new->save();
 
         // Copy tests

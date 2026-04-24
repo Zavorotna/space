@@ -10,7 +10,9 @@ class LoginController extends Controller
 {
     public function showForm()
     {
-        return view('auth.login');
+        return response(view('auth.login'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 
     public function login(Request $request)
@@ -22,7 +24,11 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'));
+            $intended = session()->pull('url.intended');
+            if ($intended && !str_contains($intended, '/notifications/') && !str_contains($intended, '/csrf')) {
+                return redirect($intended);
+            }
+            return redirect()->route('dashboard');
         }
 
         return back()->withErrors(['phone' => 'Невірний телефон або пароль.'])->onlyInput('phone');

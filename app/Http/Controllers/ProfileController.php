@@ -15,8 +15,13 @@ class ProfileController extends Controller
         }
 
         if ($user->isStudent()) {
-            $user->load(['certificates.course', 'achievements', 'media']);
+            $user->load(['certificates.course', 'achievements', 'media', 'enrollments', 'parents']);
             return view('profile.student', compact('user'));
+        }
+
+        if ($user->isParent()) {
+            $user->load(['children.certificates.course', 'children.achievements', 'certificates.course', 'achievements', 'media']);
+            return view('profile.parent', compact('user'));
         }
 
         abort(404);
@@ -41,7 +46,7 @@ class ProfileController extends Controller
             'avatar' => 'nullable|image|max:2048',
         ]);
 
-        $user->update($validated);
+        $user->update(collect($validated)->except('avatar')->toArray());
 
         if ($request->hasFile('avatar')) {
             $user->addMediaFromRequest('avatar')->toMediaCollection('avatar');

@@ -3,58 +3,125 @@
 @section('content')
 <h1>Розклад занять</h1>
 
+@php
+    $current = \Carbon\Carbon::parse($date);
+
+    $prevDate = match($mode) {
+        'day'   => $current->copy()->subDay()->toDateString(),
+        'week'  => $current->copy()->subWeek()->toDateString(),
+        'month' => $current->copy()->subMonth()->toDateString(),
+    };
+    $nextDate = match($mode) {
+        'day'   => $current->copy()->addDay()->toDateString(),
+        'week'  => $current->copy()->addWeek()->toDateString(),
+        'month' => $current->copy()->addMonth()->toDateString(),
+    };
+
+    $periodLabel = match($mode) {
+        'day'   => $current->translatedFormat('l, d F Y'),
+        'week'  => $current->copy()->startOfWeek()->format('d.m') . ' — ' . $current->copy()->endOfWeek()->format('d.m.Y'),
+        'month' => $current->translatedFormat('F Y'),
+    };
+@endphp
+
+{{-- Mode tabs --}}
 <div>
-    <a href="{{ route('schedule.index', ['mode' => 'day', 'date' => $date]) }}" @if($mode==='day') style="font-weight:bold" @endif>день</a>
-    <a href="{{ route('schedule.index', ['mode' => 'week', 'date' => $date]) }}" @if($mode==='week') style="font-weight:bold" @endif>тиждень</a>
-    <a href="{{ route('schedule.index', ['mode' => 'month', 'date' => $date]) }}" @if($mode==='month') style="font-weight:bold" @endif>місяць</a>
-    <span>{{ \Carbon\Carbon::parse($date)->translatedFormat('F Y') }}</span>
+    <a href="{{ route('schedule.index', ['mode' => 'day',   'date' => $date]) }}" @if($mode==='day')   style="font-weight:bold" @endif>День</a>
+    <a href="{{ route('schedule.index', ['mode' => 'week',  'date' => $date]) }}" @if($mode==='week')  style="font-weight:bold" @endif>Тиждень</a>
+    <a href="{{ route('schedule.index', ['mode' => 'month', 'date' => $date]) }}" @if($mode==='month') style="font-weight:bold" @endif>Місяць</a>
 </div>
 
+{{-- Navigation --}}
+<div style="display:flex; align-items:center; gap:12px; margin:10px 0;">
+    <a href="{{ route('schedule.index', ['mode' => $mode, 'date' => $prevDate]) }}">&larr;</a>
+    <strong>{{ $periodLabel }}</strong>
+    <a href="{{ route('schedule.index', ['mode' => $mode, 'date' => $nextDate]) }}">&rarr;</a>
+    <a href="{{ route('schedule.index', ['mode' => $mode, 'date' => today()->toDateString()]) }}" style="font-size:0.85em;">Сьогодні</a>
+</div>
+
+{{-- DAY VIEW --}}
 @if($mode === 'day')
-    <h2>{{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F') }}</h2>
     @forelse($lessons as $lesson)
-    <div>
-        <strong>{{ $lesson->start_time }} - {{ $lesson->end_time }}</strong>
+    <div style="border:1px solid #ddd; padding:8px; margin:6px 0;">
+        <strong>{{ $lesson->start_time }} — {{ $lesson->end_time }}</strong>
         {{ $lesson->course->title }}
-        {{ $lesson->title ? "({$lesson->title})" : '' }}
-        [{{ $lesson->mode }}]
-        @if($lesson->location) | {{ $lesson->location->name }} @endif
+        {{ $lesson->title ? "· {$lesson->title}" : '' }}
+        <span style="color:#888;">[{{ $lesson->mode === 'online' ? 'Онлайн' : 'Офлайн' }}]</span>
+        @if($lesson->location) · {{ $lesson->location->name }} @endif
+        @if($lesson->classroom) ({{ $lesson->classroom->name }}) @endif
     </div>
     @empty
     <p>Немає занять на цей день.</p>
     @endforelse
+
+{{-- WEEK VIEW --}}
 @elseif($mode === 'week')
     @php $grouped = $lessons->groupBy(fn($l) => $l->date->format('Y-m-d')); @endphp
-    @for($d = \Carbon\Carbon::parse($date)->startOfWeek(); $d <= \Carbon\Carbon::parse($date)->endOfWeek(); $d->addDay())
-        <h3>{{ $d->translatedFormat('D d.m') }}</h3>
-        @foreach($grouped->get($d->format('Y-m-d'), collect()) as $lesson)
-        <div>
-            {{ $lesson->start_time }} - {{ $lesson->end_time }}
-            | {{ $lesson->course->title }}
-            @if($lesson->mode === 'offline' && $lesson->location) | {{ $lesson->location->name }} @endif
+    @php $weekStart = $current->copy()->startOfWeek(); @endphp
+    @for($d = $weekStart->copy(); $d <= $weekStart->copy()->endOfWeek(); $d->addDay())
+    @php $key = $d->format('Y-m-d'); $dayLessons = $grouped->get($key, collect()); @endphp
+    <div style="margin-bottom:10px;">
+        <div style="margin-bottom:4px;">
+            <a href="{{ route('schedule.index', ['mode' => 'day', 'date' => $key]) }}"
+               style="font-weight:{{ $key === today()->toDateString() ? 'bold' : 'normal' }};">
+                {{ $d->translatedFormat('D d.m') }}
+            </a>
         </div>
-        @endforeach
+        @forelse($dayLessons as $lesson)
+        <div style="padding:4px 0; border-bottom:1px solid #eee;">
+            {{ $lesson->start_time }} — {{ $lesson->end_time }}
+            · <strong>{{ $lesson->course->title }}</strong>
+            {{ $lesson->title ? "· {$lesson->title}" : '' }}
+            @if($lesson->mode === 'offline' && $lesson->location) · {{ $lesson->location->name }} @endif
+        </div>
+        @empty
+        <span style="color:#aaa; font-size:0.85em;">Немає занять</span>
+        @endforelse
+    </div>
     @endfor
+
+{{-- MONTH VIEW --}}
 @elseif($mode === 'month')
     @php
-        $monthStart = \Carbon\Carbon::parse($date)->startOfMonth();
-        $monthEnd = \Carbon\Carbon::parse($date)->endOfMonth();
-        $grouped = $lessons->groupBy(fn($l) => $l->date->format('Y-m-d'));
+        $monthStart = $current->copy()->startOfMonth();
+        $monthEnd   = $current->copy()->endOfMonth();
+        $grouped    = $lessons->groupBy(fn($l) => $l->date->format('Y-m-d'));
+        $cell       = $monthStart->copy()->startOfWeek();
     @endphp
-    <table>
-        <thead><tr><th>ПН</th><th>ВТ</th><th>СР</th><th>ЧТ</th><th>ПТ</th><th>СБ</th><th>НД</th></tr></thead>
+    <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+        <thead>
+            <tr>
+                @foreach(['ПН','ВТ','СР','ЧТ','ПТ','СБ','НД'] as $day)
+                    <th style="padding:6px; border:1px solid #ddd; text-align:center;">{{ $day }}</th>
+                @endforeach
+            </tr>
+        </thead>
         <tbody>
-        @php $current = $monthStart->copy()->startOfWeek(); @endphp
-        @while($current <= $monthEnd->copy()->endOfWeek())
+        @while($cell <= $monthEnd->copy()->endOfWeek())
         <tr>
             @for($i = 0; $i < 7; $i++)
-                <td>
-                    {{ $current->day }}
-                    @foreach($grouped->get($current->format('Y-m-d'), collect()) as $lesson)
-                        <div>{{ $lesson->start_time }} {{ Str::limit($lesson->course->title, 10) }}</div>
-                    @endforeach
-                </td>
-                @php $current->addDay(); @endphp
+            @php
+                $key = $cell->format('Y-m-d');
+                $count = $grouped->get($key, collect())->count();
+                $isCurrentMonth = $cell->month === $monthStart->month;
+                $isToday = $key === today()->toDateString();
+            @endphp
+            <td style="padding:6px; border:1px solid #ddd; vertical-align:top; height:50px;
+                       {{ !$isCurrentMonth ? 'color:#ccc;' : '' }}">
+                @if($count > 0)
+                    <a href="{{ route('schedule.index', ['mode' => 'day', 'date' => $key]) }}"
+                       style="display:inline-flex; align-items:center; justify-content:center;
+                              width:26px; height:26px; border-radius:50%; background:#4a90d9;
+                              color:#fff; text-decoration:none; font-weight:bold; font-size:0.85em;"
+                       title="{{ $count }} {{ trans_choice('заняття|заняття|занять', $count) }}">
+                        {{ $cell->day }}
+                    </a>
+                    <span style="font-size:0.75em; color:#888;">×{{ $count }}</span>
+                @else
+                    <span style="{{ $isToday ? 'font-weight:bold;' : '' }}">{{ $cell->day }}</span>
+                @endif
+            </td>
+            @php $cell->addDay(); @endphp
             @endfor
         </tr>
         @endwhile
@@ -62,6 +129,7 @@
     </table>
 @endif
 
+{{-- Add lesson form --}}
 @if(auth()->user()->isTeacher() || auth()->user()->isAdmin())
 <hr>
 <h2>Додати заняття</h2>
@@ -92,13 +160,14 @@
             @endforeach
         @endforeach
     </select>
-    <input type="date" name="date" required>
+    <input type="date" name="date" value="{{ $mode === 'day' ? $date : '' }}" required>
     <input type="time" name="start_time" required>
     <input type="time" name="end_time" required>
     <button type="submit">Додати заняття</button>
 </form>
 @endif
 
+{{-- Attendance --}}
 @foreach($lessons->where('attendance_confirmed', false) as $lesson)
     @if(auth()->user()->isTeacher() && $lesson->teacher_id === auth()->id() && $lesson->date <= today())
     <div>

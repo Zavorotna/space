@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Lesson, Location, Classroom};
+use App\Models\{Lesson, Location, Classroom, CalendarEvent};
 use App\Services\ScheduleService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -95,6 +95,87 @@ class ScheduleController extends Controller
         return back()->with('success', 'Присутність підтверджено.');
     }
 
+    public function reportCompletion(Request $request, Lesson $lesson)
+    {
+        $isIndividual = $lesson->course->type === 'individual';
+
+        $validated = $request->validate([
+            'completion_status' => ['required', \Illuminate\Validation\Rule::in(
+                $isIndividual ? ['full', 'partial', 'cancelled'] : ['full', 'cancelled', 'rescheduled']
+            )],
+            'actual_hours'     => 'nullable|numeric|min:0.5|max:10',
+            'completion_note'  => 'nullable|string|max:1000',
+            'schedule_makeup'  => 'boolean',
+            'makeup_date'      => 'nullable|date|required_if:schedule_makeup,1',
+            'makeup_start'     => 'nullable|date_format:H:i|required_if:schedule_makeup,1',
+            'makeup_end'       => 'nullable|date_format:H:i|after:makeup_start|required_if:schedule_makeup,1',
+        ]);
+
+        $lesson->update([
+            'completion_status'   => $validated['completion_status'],
+            'actual_minutes'      => isset($validated['actual_hours']) ? (int) round($validated['actual_hours'] * 60) : null,
+            'completion_note'     => $validated['completion_note'] ?? null,
+            'completion_noted_at' => now(),
+        ]);
+
+        // Schedule makeup lesson if requested
+        if (!empty($validated['schedule_makeup']) && !empty($validated['makeup_date'])) {
+            $makeup = Lesson::create([
+                'course_id'           => $lesson->course_id,
+                'teacher_id'          => $lesson->teacher_id,
+                'title'               => 'Відпрацювання: ' . ($lesson->title ?? $lesson->course->title),
+                'mode'                => $lesson->mode,
+                'location_id'         => $lesson->location_id,
+                'classroom_id'        => $lesson->classroom_id,
+                'date'                => $validated['makeup_date'],
+                'start_time'          => $validated['makeup_start'],
+                'end_time'            => $validated['makeup_end'],
+                'makeup_for_lesson_id' => $lesson->id,
+            ]);
+        }
+
+        return back()->with('success', 'Звіт про заняття збережено.');
+    }
+
+    public function lessonStats(Request $request)
+    {
+        $month = $request->integer('month', now()->month);
+        $year  = $request->integer('year', now()->year);
+
+        $lessons = Lesson::with(['course', 'teacher'])
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->whereNotNull('completion_status')
+            ->orderBy('date')
+            ->get();
+
+        // Group by teacher
+        $byTeacher = $lessons->groupBy('teacher_id')->map(function ($teacherLessons) {
+            $individual = $teacherLessons->filter(fn($l) => $l->course->type === 'individual');
+            $group      = $teacherLessons->filter(fn($l) => $l->course->type === 'group');
+
+            return [
+                'teacher'        => $teacherLessons->first()->teacher,
+                'total'          => $teacherLessons->count(),
+                'full'           => $teacherLessons->where('completion_status', 'full')->count(),
+                'partial'        => $teacherLessons->where('completion_status', 'partial')->count(),
+                'cancelled'      => $teacherLessons->where('completion_status', 'cancelled')->count(),
+                'rescheduled'    => $teacherLessons->where('completion_status', 'rescheduled')->count(),
+                'individual_minutes_planned' => $individual->sum(fn($l) => $l->plannedMinutes()),
+                'individual_minutes_actual'  => $individual->sum(fn($l) => $l->actual_minutes ?? $l->plannedMinutes()),
+                'lessons'        => $teacherLessons,
+            ];
+        });
+
+        $unreported = Lesson::with(['course', 'teacher'])
+            ->where('date', '<', today())
+            ->whereNull('completion_status')
+            ->orderBy('date')
+            ->get();
+
+        return view('superadmin.lesson-stats', compact('byTeacher', 'unreported', 'month', 'year'));
+    }
+
     /**
      * JSON endpoint for calendar (AJAX)
      */
@@ -124,5 +205,26 @@ class ScheduleController extends Controller
         ]);
 
         return response()->json($lessons);
+    }
+
+    public function storeEvent(Request $request)
+    {
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'type'        => 'required|in:graduation,meeting,holiday,other',
+            'date'        => 'required|date',
+            'start_time'  => 'nullable|date_format:H:i',
+            'end_time'    => 'nullable|date_format:H:i',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        CalendarEvent::create([...$validated, 'created_by' => $request->user()->id]);
+        return back()->with('success', 'Подію додано.');
+    }
+
+    public function destroyEvent(CalendarEvent $event)
+    {
+        $event->delete();
+        return back()->with('success', 'Подію видалено.');
     }
 }

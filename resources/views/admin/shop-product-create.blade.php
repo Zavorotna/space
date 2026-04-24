@@ -20,13 +20,8 @@
     </div>
 
     <div>
-        <label>Ціна (монети)</label>
+        <label>Ціна (Hashtag Coins, 1 HC = 1 грн)</label>
         <input type="number" name="price_coins" value="{{ old('price_coins', 0) }}" min="0" required>
-    </div>
-
-    <div>
-        <label>Ціна (грн)</label>
-        <input type="number" name="price_uah" value="{{ old('price_uah', 0) }}" min="0" step="0.01" required>
     </div>
 
     <div>
