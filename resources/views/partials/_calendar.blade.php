@@ -6,6 +6,7 @@
     $schedEvents    Collection<CalendarEvent>
     $schedLocations Collection<Location>   (optional, for add form)
     $schedCourses   Collection<Course>     (optional, for add form)
+    $schedBirthdays Collection            (optional, grouped by date)
     $canEdit        bool
 --}}
 @php
@@ -29,8 +30,9 @@
         default => $cur->translatedFormat('l, d F Y'),
     };
 
-    $lessonsByDate = $schedLessons->groupBy(fn($l) => $l->date->format('Y-m-d'));
-    $eventsByDate  = $schedEvents->groupBy(fn($e) => $e->date->format('Y-m-d'));
+    $lessonsByDate   = $schedLessons->groupBy(fn($l) => $l->date->format('Y-m-d'));
+    $eventsByDate    = $schedEvents->groupBy(fn($e) => $e->date->format('Y-m-d'));
+    $birthdaysByDate = $schedBirthdays ?? collect();
 
     $evColors = ['graduation' => '#f5a623', 'meeting' => '#27ae60', 'holiday' => '#8e44ad', 'other' => '#7f8c8d'];
     $evLabels = ['graduation' => 'Випуск', 'meeting' => 'Зустріч', 'holiday' => 'Вихідний', 'other' => 'Подія'];
@@ -180,12 +182,14 @@
     {{-- ════════════════════════════════ DAY VIEW ════════════════════════════════ --}}
     @if($schedMode === 'day')
     @php
-        $dayKey     = $cur->toDateString();
-        $dayLessons = $lessonsByDate->get($dayKey, collect());
-        $dayEvents  = $eventsByDate->get($dayKey, collect());
-        $allItems   = $dayLessons->map(fn($l) => ['kind'=>'lesson','time'=>$l->start_time,'obj'=>$l])
-                        ->merge($dayEvents->map(fn($e) => ['kind'=>'event','time'=>$e->start_time ?? '00:00','obj'=>$e]))
-                        ->sortBy('time');
+        $dayKey        = $cur->toDateString();
+        $dayLessons    = $lessonsByDate->get($dayKey, collect());
+        $dayEvents     = $eventsByDate->get($dayKey, collect());
+        $dayBirthdays  = $birthdaysByDate->get($dayKey, collect());
+        $allItems      = $dayLessons->map(fn($l) => ['kind'=>'lesson','time'=>$l->start_time,'obj'=>$l])
+                            ->merge($dayEvents->map(fn($e) => ['kind'=>'event','time'=>$e->start_time ?? '00:00','obj'=>$e]))
+                            ->merge($dayBirthdays->map(fn($b) => ['kind'=>'birthday','time'=>'00:00','obj'=>$b]))
+                            ->sortBy('time');
     @endphp
     <div class="cal-day">
         @forelse($allItems as $item)
@@ -202,6 +206,18 @@
                         @if($l->classroom) ({{ $l->classroom->name }}) @endif
                         @isset($l->teacher) · {{ $l->teacher->full_name }} @endisset
                     </div>
+                </div>
+            </div>
+            @elseif($item['kind'] === 'birthday')
+            @php $b = $item['obj']; $bu = $b['user']; @endphp
+            <div class="cal-item cal-item--birthday">
+                <div class="cal-item-time" style="font-size:1.1rem;">🎂</div>
+                <div class="cal-item-body">
+                    <strong>{{ $bu->full_name }}</strong>
+                    <span class="cal-badge-ev" style="background:#e84393;">День народження</span>
+                    @if($bu->birthday)
+                    <div class="cal-meta">{{ $bu->birthday->format('d.m.Y') }}</div>
+                    @endif
                 </div>
             </div>
             @else
@@ -238,6 +254,7 @@
             $key = $d->format('Y-m-d');
             $dl  = $lessonsByDate->get($key, collect());
             $de  = $eventsByDate->get($key, collect());
+            $db  = $birthdaysByDate->get($key, collect());
             $isT = $key === $today;
         @endphp
         <div class="cal-week-col {{ $isT ? 'cal-week-col--today' : '' }}">
@@ -258,7 +275,13 @@
                 <div class="cal-wi-title">{{ $e->title }}</div>
             </div>
             @endforeach
-            @if($dl->isEmpty() && $de->isEmpty())
+            @foreach($db as $b)
+            <div class="cal-week-item" style="border-left:3px solid #e84393; background:#fff0f7;">
+                <div class="cal-wi-time">🎂</div>
+                <div class="cal-wi-title">{{ $b['user']->full_name }}</div>
+            </div>
+            @endforeach
+            @if($dl->isEmpty() && $de->isEmpty() && $db->isEmpty())
             <div class="cal-week-empty">—</div>
             @endif
         </div>
@@ -284,11 +307,12 @@
             $key    = $cell->format('Y-m-d');
             $lCnt   = $lessonsByDate->get($key, collect())->count();
             $eCnt   = $eventsByDate->get($key, collect())->count();
+            $bCnt   = $birthdaysByDate->get($key, collect())->count();
             $inMon  = $cell->month === $mStart->month;
             $isT    = $key === $today;
         @endphp
         <div class="cal-month-cell {{ !$inMon ? 'cal-mc--out' : '' }} {{ $isT ? 'cal-mc--today' : '' }}">
-            @if($lCnt || $eCnt)
+            @if($lCnt || $eCnt || $bCnt)
             <a href="{{ route('dashboard', ['schedule_mode'=>'day','schedule_date'=>$key]) }}" class="cal-mc-num cal-mc-num--link">{{ $cell->day }}</a>
             @else
             <span class="cal-mc-num">{{ $cell->day }}</span>
@@ -296,6 +320,7 @@
             <div class="cal-mc-dots">
                 @if($lCnt) <span class="cal-dot cal-dot--blue" title="{{ $lCnt }} занять"></span> @endif
                 @if($eCnt) <span class="cal-dot cal-dot--orange" title="{{ $eCnt }} подій"></span> @endif
+                @if($bCnt) <span class="cal-dot cal-dot--pink" title="{{ $bCnt }} днів народження"></span> @endif
             </div>
         </div>
         @php $cell->addDay(); @endphp
@@ -379,6 +404,8 @@
 .cal-dot{display:inline-block;width:7px;height:7px;border-radius:50%;}
 .cal-dot--blue{background:#4a90d9;}
 .cal-dot--orange{background:#f5a623;}
+.cal-dot--pink{background:#e84393;}
+.cal-item--birthday{border-left-color:#e84393;background:#fff0f7;}
 
 @media(max-width:600px){
     .cal-week{grid-template-columns:repeat(7,1fr);}

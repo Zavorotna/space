@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -36,23 +37,55 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = $request->user();
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
-            'birthday' => 'required|date',
-            'bio' => 'nullable|string|max:2000',
-            'avatar' => 'nullable|image|max:2048',
-        ]);
 
-        $user->update(collect($validated)->except('avatar')->toArray());
+        $rules = [
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
+            'phone'      => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'email'      => 'nullable|email|unique:users,email,' . $user->id,
+            'bio'        => 'nullable|string|max:2000',
+            'avatar'     => 'nullable|image|max:2048',
+        ];
+
+        // Birthday can only be set once
+        if (is_null($user->birthday)) {
+            $rules['birthday'] = 'required|date|before:today';
+        }
+
+        $validated = $request->validate($rules);
+
+        $data = collect($validated)->except('avatar')->toArray();
+
+        // If birthday already exists, never overwrite it
+        if ($user->birthday) {
+            unset($data['birthday']);
+        }
+
+        $user->update($data);
 
         if ($request->hasFile('avatar')) {
             $user->addMediaFromRequest('avatar')->toMediaCollection('avatar');
         }
 
         return back()->with('success', 'Профіль оновлено.');
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'current_password' => ['required', function ($attr, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->password)) {
+                    $fail('Поточний пароль невірний.');
+                }
+            }],
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user->update(['password' => $request->password]);
+
+        return back()->with('password_success', 'Пароль змінено.');
     }
 
     /**

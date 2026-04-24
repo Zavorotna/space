@@ -11,6 +11,7 @@
     'schedEvents'    => $schedEvents,
     'schedLocations' => $schedLocations,
     'schedCourses'   => $schedCourses,
+    'schedBirthdays' => $schedBirthdays,
     'canEdit'        => true,
 ])
 

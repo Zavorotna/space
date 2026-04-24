@@ -63,6 +63,7 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
     // ── Profile ────────────────────────────────────────────────
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'changePassword'])->name('profile.password');
     Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile/avatar-extra', [ProfileController::class, 'uploadExtraAvatar'])->name('profile.avatar.extra');
 

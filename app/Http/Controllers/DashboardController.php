@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\{Course, Lesson, Transaction, MonthlyLeaderboard, Location, CalendarEvent};
+use App\Models\{Course, Lesson, Transaction, MonthlyLeaderboard, Location, CalendarEvent, User};
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -31,6 +31,27 @@ class DashboardController extends Controller
         };
     }
 
+    private function birthdaysInRange(\Illuminate\Support\Collection $users, string $start, string $end): \Illuminate\Support\Collection
+    {
+        $result = collect();
+        $s = Carbon::parse($start);
+        $e = Carbon::parse($end);
+
+        foreach ($users as $user) {
+            if (!$user->birthday) continue;
+            $cur = $s->copy();
+            while ($cur <= $e) {
+                if ($user->birthday->month === $cur->month && $user->birthday->day === $cur->day) {
+                    $result->push(['date' => $cur->toDateString(), 'user' => $user]);
+                    break;
+                }
+                $cur->addDay();
+            }
+        }
+
+        return $result->groupBy('date');
+    }
+
     protected function adminDashboard($user, Request $request)
     {
         $schedMode = $request->get('schedule_mode', 'day');
@@ -48,6 +69,10 @@ class DashboardController extends Controller
 
         $schedLocations = Location::where('is_active', true)->with('classrooms')->get();
         $schedCourses   = Course::where('status', 'active')->where('is_template', false)->get();
+
+        // Admin sees all users' birthdays
+        $allUsers = User::whereNotNull('birthday')->get(['id', 'first_name', 'last_name', 'birthday', 'role']);
+        $schedBirthdays = $this->birthdaysInRange($allUsers, $start, $end);
 
         $lessonsNeedingReport = Lesson::with(['course'])
             ->where('teacher_id', $user->id)
@@ -75,6 +100,7 @@ class DashboardController extends Controller
             'schedEvents'           => $schedEvents,
             'schedLocations'        => $schedLocations,
             'schedCourses'          => $schedCourses,
+            'schedBirthdays'        => $schedBirthdays,
         ];
 
         return view('admin.dashboard', $data);
@@ -133,10 +159,24 @@ class DashboardController extends Controller
         $transactions = $user->transactions()->latest()->limit(10)->get();
         $notes = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
 
+        // Teacher sees: their students + all staff (teachers, admins)
+        $studentIds = \App\Models\Course::where('teacher_id', $user->id)
+            ->join('course_user', 'courses.id', '=', 'course_user.course_id')
+            ->where('course_user.status', 'active')
+            ->pluck('course_user.user_id');
+        $birthdayUsers = User::whereNotNull('birthday')
+            ->where(function ($q) use ($user, $studentIds) {
+                $q->whereIn('id', $studentIds)
+                  ->orWhereIn('role', ['teacher', 'admin', 'superadmin']);
+            })
+            ->get(['id', 'first_name', 'last_name', 'birthday', 'role']);
+        $schedBirthdays = $this->birthdaysInRange($birthdayUsers, $start, $end);
+
         return view('teacher.dashboard', compact(
             'courses', 'pendingHomework', 'lessonsNeedingReport',
             'wallet', 'transactions', 'notes',
-            'schedDate', 'schedMode', 'schedLessons', 'schedEvents', 'schedLocations', 'schedCourses'
+            'schedDate', 'schedMode', 'schedLessons', 'schedEvents', 'schedLocations', 'schedCourses',
+            'schedBirthdays'
         ));
     }
 
