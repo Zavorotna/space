@@ -20,8 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
-            $request->session()->regenerate();
-            return redirect()->route('login')
-                ->withErrors(['phone' => 'Сесія застаріла. Будь ласка, увійдіть знову.']);
+            // Regenerate the CSRF token so the redirected page is immediately usable
+            $request->session()->regenerateToken();
+            return back()
+                ->withInput($request->except(['password', 'password_confirmation', 'current_password']))
+                ->withErrors(['session' => 'Сесія застаріла — токен оновлено. Спробуйте ще раз.']);
         });
     })->create();

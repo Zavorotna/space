@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{PlatformNotification, PushSubscription};
+use App\Models\{PlatformNotification, PushSubscription, User};
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
@@ -31,6 +31,34 @@ class NotificationController extends Controller
         return response()->json([
             'count' => $request->user()->notifications()->unread()->count(),
         ]);
+    }
+
+    public function sendToUser(Request $request, User $user)
+    {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isTeacher()) {
+            abort(403);
+        }
+
+        $request->validate(['message' => 'required|string|max:1000']);
+
+        $sender = auth()->user();
+
+        PlatformNotification::create([
+            'user_id' => $user->id,
+            'type'    => 'admin_message',
+            'title'   => "Повідомлення від {$sender->full_name}",
+            'message' => $request->message,
+            'is_read' => false,
+        ]);
+
+        return back()->with('notify_success', 'Повідомлення надіслано.');
+    }
+
+    public function dismissBanner(PlatformNotification $notification)
+    {
+        if ($notification->user_id !== auth()->id()) abort(403);
+        $notification->update(['is_read' => true]);
+        return response()->json(['ok' => true]);
     }
 
     /**

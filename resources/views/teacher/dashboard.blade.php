@@ -3,6 +3,8 @@
 @section('content')
 <h1>Дашборд</h1>
 
+@include('partials._admin_banners')
+
 {{-- ── Calendar ── --}}
 @include('partials._calendar', [
     'schedDate'      => $schedDate,

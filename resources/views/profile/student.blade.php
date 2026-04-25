@@ -79,4 +79,24 @@
         <p><a href="{{ route('wallet.transfer') }}?to={{ $user->id }}">Переказати монети</a></p>
     @endif
 @endauth
+
+{{-- Send notification (admin / teacher only) --}}
+@auth
+@if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
+<div style="border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin-top:20px;">
+    <h2 style="margin:0 0 10px;font-size:1rem;">Надіслати повідомлення</h2>
+    @if(session('notify_success'))
+    <p style="color:#27ae60;margin-bottom:8px;">{{ session('notify_success') }}</p>
+    @endif
+    <form method="POST" action="{{ route('notifications.sendToUser', $user) }}">
+        @csrf
+        <textarea name="message" rows="3" required placeholder="Текст повідомлення..."
+                  style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:.9rem;resize:vertical;"></textarea>
+        <button type="submit" style="margin-top:8px;padding:7px 16px;background:#f5a623;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:.88rem;">
+            Надіслати
+        </button>
+    </form>
+</div>
+@endif
+@endauth
 @endsection

@@ -3,6 +3,8 @@
 @section('content')
 <h1>Адмін панель</h1>
 
+@include('partials._admin_banners')
+
 @if($pendingApplications > 0)
 <p style="margin-bottom:12px;">
     Заявок на розгляді: <strong>{{ $pendingApplications }}</strong>

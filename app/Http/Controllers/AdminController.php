@@ -140,6 +140,25 @@ class AdminController extends Controller
         return back()->with('success', 'Статус довіреного викладача змінено.');
     }
 
+    public function deleteAccount(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Не можна видалити власний акаунт.');
+        }
+        if ($user->isSuperAdmin()) {
+            return back()->with('error', 'Не можна видалити акаунт суперадміна.');
+        }
+
+        // Clear media files before force-deleting
+        $user->clearMediaCollection();
+        $user->clearMediaCollection('extra_avatars');
+
+        $name = $user->full_name;
+        $user->forceDelete();
+
+        return back()->with('success', "Акаунт «{$name}» та всі пов'язані дані видалено.");
+    }
+
     // ── Achievements (seed) ────────────────────────────────────
     public function seedAchievements()
     {

@@ -13,7 +13,9 @@ class RegisterController extends Controller
 {
     public function showForm()
     {
-        return view('auth.register');
+        return response(view('auth.register'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 
     public function register(Request $request)

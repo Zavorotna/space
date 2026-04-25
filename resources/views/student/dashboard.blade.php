@@ -3,6 +3,8 @@
 @section('content')
 <h1>Дашборд</h1>
 
+@include('partials._admin_banners')
+
 @if($currentCourse)
 <div style="margin-bottom:20px;">
     <h2>{{ $currentCourse->title }}</h2>

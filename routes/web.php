@@ -70,9 +70,11 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
     // ── Notifications ──────────────────────────────────────────
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/{notification}/dismiss', [NotificationController::class, 'dismissBanner'])->name('notifications.dismiss');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
     Route::post('/notifications/push-subscribe', [NotificationController::class, 'subscribePush'])->name('notifications.pushSubscribe');
+    Route::post('/profile/{user}/notify', [NotificationController::class, 'sendToUser'])->name('notifications.sendToUser');
 
     // ── Notes ──────────────────────────────────────────────────
     Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
@@ -257,6 +259,7 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::put('/courses/{course}/liqpay', [AdminController::class, 'courseLiqpay'])->name('courses.liqpay');
         Route::post('/users/{user}/toggle-trusted', [AdminController::class, 'toggleTrustedTeacher'])->name('users.toggleTrusted');
         Route::get('/lesson-stats', [ScheduleController::class, 'lessonStats'])->name('lesson.stats');
+        Route::delete('/users/{user}', [AdminController::class, 'deleteAccount'])->name('users.destroy');
     });
 
     // ═════════════════════════════════════════════════════════

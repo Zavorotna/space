@@ -6,6 +6,13 @@
 
 <h1>Користувачі</h1>
 
+@if(session('success'))
+<p style="color:#27ae60;margin-bottom:10px;">{{ session('success') }}</p>
+@endif
+@if(session('error'))
+<p style="color:#e74c3c;margin-bottom:10px;">{{ session('error') }}</p>
+@endif
+
 {{-- Search / Filter --}}
 <form method="GET" action="{{ route('admin.users') }}">
     <input type="text" name="search" value="{{ request('search') }}" placeholder="Пошук за ім'ям, прізвищем, телефоном...">
@@ -55,6 +62,16 @@
                 @endif
 
                 <a href="{{ route('profile.show', $u) }}">Профіль</a>
+
+                @if(auth()->user()->isSuperAdmin() && $u->id !== auth()->id() && !$u->isSuperAdmin())
+                <form method="POST" action="{{ route('superadmin.users.destroy', $u) }}" style="display:inline;"
+                      onsubmit="return confirm('Видалити акаунт «{{ $u->full_name }}»?\n\nБудуть видалені всі дані: курси, транзакції, сповіщення тощо.\nЦю дію неможливо скасувати.')">
+                    @csrf @method('DELETE')
+                    <button type="submit" style="background:#e74c3c;color:#fff;border:none;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:.8rem;">
+                        Видалити
+                    </button>
+                </form>
+                @endif
             </td>
         </tr>
     @endforeach

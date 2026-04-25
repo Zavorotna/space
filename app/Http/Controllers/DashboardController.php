@@ -89,6 +89,8 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        $adminBanners = $user->notifications()->unread()->where('type', 'admin_message')->latest()->get();
+
         $data = [
             'pendingApplications'   => \App\Models\CourseApplication::where('status', 'pending')->count(),
             'pendingWithdrawalsList'=> \App\Models\WithdrawalRequest::with('user')->where('status', 'pending')->latest()->get(),
@@ -101,6 +103,7 @@ class DashboardController extends Controller
             'schedLocations'        => $schedLocations,
             'schedCourses'          => $schedCourses,
             'schedBirthdays'        => $schedBirthdays,
+            'adminBanners'          => $adminBanners,
         ];
 
         return view('admin.dashboard', $data);
@@ -171,12 +174,13 @@ class DashboardController extends Controller
             })
             ->get(['id', 'first_name', 'last_name', 'birthday', 'role']);
         $schedBirthdays = $this->birthdaysInRange($birthdayUsers, $start, $end);
+        $adminBanners = $user->notifications()->unread()->where('type', 'admin_message')->latest()->get();
 
         return view('teacher.dashboard', compact(
             'courses', 'pendingHomework', 'lessonsNeedingReport',
             'wallet', 'transactions', 'notes',
             'schedDate', 'schedMode', 'schedLessons', 'schedEvents', 'schedLocations', 'schedCourses',
-            'schedBirthdays'
+            'schedBirthdays', 'adminBanners'
         ));
     }
 
@@ -210,11 +214,13 @@ class DashboardController extends Controller
         $transactions = $user->transactions()->latest()->limit(10)->get();
         $notes = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
         $receivedNotes = $user->receivedNotes()->with('author')->unread()->get();
+        $adminBanners = $user->notifications()->unread()->where('type', 'admin_message')->latest()->get();
 
         return view('student.dashboard', compact(
             'currentCourse', 'pendingHomework', 'totalHomeworkToDo',
             'wallet', 'transactions', 'notes', 'receivedNotes',
-            'schedDate', 'schedMode', 'schedLessons', 'schedEvents'
+            'schedDate', 'schedMode', 'schedLessons', 'schedEvents',
+            'adminBanners'
         ));
     }
 
