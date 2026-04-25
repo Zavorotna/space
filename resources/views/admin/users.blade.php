@@ -40,21 +40,20 @@
     @foreach($users as $u)
         <tr>
             <td>{{ $u->id }}</td>
-            <td>{{ $u->first_name }}</td>
-            <td>{{ $u->last_name }}</td>
+            <td><a href="{{ route('profile.show', $u) }}" style="text-decoration:none;color:inherit;">{{ $u->first_name }}</a></td>
+            <td><a href="{{ route('profile.show', $u) }}" style="text-decoration:none;color:inherit;">{{ $u->last_name }}</a></td>
             <td>{{ $u->phone }}</td>
             <td>{{ $u->role }}</td>
             <td>{{ $u->isVip() ? '⭐' : '—' }}</td>
             <td>{{ $u->login_streak }}</td>
             <td>
-                <form method="POST" action="{{ route('admin.users.role', $u) }}" style="display:inline;">
+                <form method="POST" action="{{ route('admin.users.role', $u) }}" id="role-form-{{ $u->id }}">
                     @csrf @method('PUT')
-                    <select name="role">
+                    <select name="role" onchange="document.getElementById('role-form-{{ $u->id }}').submit()">
                         @foreach(['superadmin','admin','teacher','student','parent','registered'] as $r)
                             <option value="{{ $r }}" @selected($u->role === $r)>{{ $r }}</option>
                         @endforeach
                     </select>
-                    <button type="submit">Змінити</button>
                 </form>
 
                 @if($u->role === 'teacher')
@@ -63,8 +62,6 @@
                         <button type="submit">{{ $u->is_trusted_teacher ? 'Зняти довіру' : 'Довірений' }}</button>
                     </form>
                 @endif
-
-                <a href="{{ route('profile.show', $u) }}">Профіль</a>
 
                 @if(auth()->user()->id !== $u->id)
                 <button type="button"
