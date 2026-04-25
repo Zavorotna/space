@@ -12,6 +12,9 @@
 @if(session('error'))
 <p style="color:#e74c3c;margin-bottom:10px;">{{ session('error') }}</p>
 @endif
+@if(session('notify_success'))
+<p style="color:#27ae60;margin-bottom:10px;">{{ session('notify_success') }}</p>
+@endif
 
 {{-- Search / Filter --}}
 <form method="GET" action="{{ route('admin.users') }}">
@@ -63,9 +66,27 @@
 
                 <a href="{{ route('profile.show', $u) }}">Профіль</a>
 
+                @if(auth()->user()->id !== $u->id)
+                <button type="button"
+                        onclick="document.getElementById('msg-form-{{ $u->id }}').style.display = document.getElementById('msg-form-{{ $u->id }}').style.display === 'none' ? 'block' : 'none'"
+                        style="background:#f5a623;color:#fff;border:none;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:.8rem;">
+                    Повідомлення
+                </button>
+                <div id="msg-form-{{ $u->id }}" style="display:none;margin-top:6px;">
+                    <form method="POST" action="{{ route('notifications.sendToUser', $u) }}">
+                        @csrf
+                        <textarea name="message" rows="2" required placeholder="Текст повідомлення..."
+                                  style="width:220px;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:.82rem;resize:vertical;display:block;"></textarea>
+                        <button type="submit" style="margin-top:4px;padding:4px 10px;background:#f5a623;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.8rem;">
+                            Надіслати
+                        </button>
+                    </form>
+                </div>
+                @endif
+
                 @if(auth()->user()->isSuperAdmin() && $u->id !== auth()->id() && !$u->isSuperAdmin())
                 <form method="POST" action="{{ route('superadmin.users.destroy', $u) }}" style="display:inline;"
-                      onsubmit="return confirm('Видалити акаунт «{{ $u->full_name }}»?\n\nБудуть видалені всі дані: курси, транзакції, сповіщення тощо.\nЦю дію неможливо скасувати.')">
+                      onsubmit="return confirm('Видалити акаунт «{{ addslashes($u->full_name) }}»?\n\nБудуть видалені всі дані: курси, транзакції, сповіщення тощо.\nЦю дію неможливо скасувати.')">
                     @csrf @method('DELETE')
                     <button type="submit" style="background:#e74c3c;color:#fff;border:none;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:.8rem;">
                         Видалити

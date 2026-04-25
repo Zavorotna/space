@@ -80,9 +80,8 @@
     @endif
 @endauth
 
-{{-- Send notification (admin / teacher only) --}}
-@auth
-@if(auth()->user()->isAdmin() || auth()->user()->isTeacher())
+{{-- Send notification (admin / teacher only, not to yourself) --}}
+@if(auth()->check() && auth()->id() !== $user->id && (auth()->user()->isAdmin() || auth()->user()->isTeacher()))
 <div style="border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin-top:20px;">
     <h2 style="margin:0 0 10px;font-size:1rem;">Надіслати повідомлення</h2>
     @if(session('notify_success'))
@@ -98,5 +97,4 @@
     </form>
 </div>
 @endif
-@endauth
 @endsection

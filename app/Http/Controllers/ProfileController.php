@@ -25,7 +25,9 @@ class ProfileController extends Controller
             return view('profile.parent', compact('user'));
         }
 
-        abort(404);
+        // admin / superadmin / registered — generic view
+        $user->load(['achievements', 'media']);
+        return view('profile.generic', compact('user'));
     }
 
     public function edit(Request $request)
