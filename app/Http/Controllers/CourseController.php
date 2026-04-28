@@ -287,6 +287,10 @@ class CourseController extends Controller
         if (empty($validated['schedule_mode'])) {
             $validated['schedule_mode'] = 'online';
         }
+        // Guard: never null out teacher_id (NOT NULL column) — admin left the empty option selected
+        if (array_key_exists('teacher_id', $validated) && empty($validated['teacher_id'])) {
+            unset($validated['teacher_id']);
+        }
 
         $oldTeacherId = $course->teacher_id;
         $course->update(collect($validated)->except('cover')->toArray());
