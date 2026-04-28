@@ -375,8 +375,7 @@
 
 </div>{{-- .cal-wrap --}}
 
-{{-- Styles extracted to resources/sass/schedule.sass --}}
-
+@once
 {{-- ── Lesson detail modal ── --}}
 <div class="lm-overlay" id="lm-overlay" onclick="if(event.target===this)closeLessonModal()">
 <div class="lm-card" id="lm-card">
