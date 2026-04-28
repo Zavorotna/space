@@ -20,6 +20,7 @@ use App\Http\Controllers\{
     AdminController,
     AdditionalMaterialController,
     LiqPayCallbackController,
+    DeletionRequestController,
 };
 use App\Http\Controllers\Auth\{RegisterController, LoginController, GoogleController};
 
@@ -75,6 +76,12 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
     Route::post('/notifications/push-subscribe', [NotificationController::class, 'subscribePush'])->name('notifications.pushSubscribe');
     Route::post('/profile/{user}/notify', [NotificationController::class, 'sendToUser'])->name('notifications.sendToUser');
+
+    // ── Deletion requests ──────────────────────────────────────
+    Route::post('/deletion-requests', [DeletionRequestController::class, 'store'])->name('deletion.store');
+    Route::post('/deletion-requests/{deletionRequest}/approve', [DeletionRequestController::class, 'approve'])->name('deletion.approve');
+    Route::post('/deletion-requests/{deletionRequest}/reject', [DeletionRequestController::class, 'reject'])->name('deletion.reject');
+    Route::delete('/deletion-requests/{deletionRequest}', [DeletionRequestController::class, 'destroy'])->name('deletion.destroy');
 
     // ── Notes ──────────────────────────────────────────────────
     Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
@@ -169,6 +176,7 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::get('/courses', [CourseController::class, 'teacherCourses'])->name('courses.index');
         Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
         Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+        Route::post('/courses/{course}/generate-lessons', [CourseController::class, 'generateLessons'])->name('courses.generateLessons');
         Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
         Route::get('/courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit');
         Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');

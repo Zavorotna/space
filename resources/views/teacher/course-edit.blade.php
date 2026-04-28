@@ -53,8 +53,87 @@
         @endif
         <input type="file" name="cover" accept="image/*">
     </div>
-    <button type="submit">Зберегти</button>
+
+    <hr>
+    <h3>Розклад занять</h3>
+    <p style="font-size:.85em;color:#888;">Змінення розкладу тут не перегенеровує вже існуючі заняття. Щоб додати нові — натисніть «Згенерувати заняття» після збереження.</p>
+    <div>
+        <label>Дні тижня</label><br>
+        @foreach([1=>'Пн',2=>'Вт',3=>'Ср',4=>'Чт',5=>'Пт',6=>'Сб',7=>'Нд'] as $num => $label)
+        <label style="margin-right:10px;">
+            <input type="checkbox" name="schedule_days[]" value="{{ $num }}"
+                   @checked(is_array($course->schedule_days) && in_array($num, $course->schedule_days))>
+            {{ $label }}
+        </label>
+        @endforeach
+    </div>
+    <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+        <div><label>Початок заняття</label><br>
+            <input type="time" name="schedule_start_time" value="{{ $course->schedule_start_time ? substr($course->schedule_start_time,0,5) : '' }}"></div>
+        <div><label>Кінець заняття</label><br>
+            <input type="time" name="schedule_end_time" value="{{ $course->schedule_end_time ? substr($course->schedule_end_time,0,5) : '' }}"></div>
+        <div>
+            <label>Формат</label><br>
+            <select name="schedule_mode" id="sched-mode-edit" onchange="toggleSchedLocation('edit',this.value)">
+                <option value="online" @selected(($course->schedule_mode ?? 'online')==='online')>Онлайн</option>
+                <option value="offline" @selected($course->schedule_mode==='offline')>Офлайн</option>
+            </select>
+        </div>
+    </div>
+    <div id="sched-loc-edit" style="display:{{ $course->schedule_mode==='offline'?'block':'none' }};margin-top:8px;">
+        <div>
+            <label>Локація</label><br>
+            <select name="schedule_location_id" id="sched-loc-sel-edit" onchange="filterClassrooms('edit',this.value)">
+                <option value="">— Оберіть —</option>
+                @foreach($locations as $loc)
+                <option value="{{ $loc->id }}" @selected($course->schedule_location_id == $loc->id)>{{ $loc->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div style="margin-top:6px;">
+            <label>Аудиторія</label><br>
+            <select name="schedule_classroom_id" id="sched-room-sel-edit">
+                <option value="">— Оберіть —</option>
+                @foreach($locations as $loc)
+                    @foreach($loc->classrooms as $room)
+                    <option value="{{ $room->id }}" data-location="{{ $loc->id }}"
+                            @selected($course->schedule_classroom_id == $room->id)>
+                        {{ $loc->name }} — {{ $room->name }}
+                    </option>
+                    @endforeach
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    <button type="submit" style="margin-top:14px;">Зберегти</button>
 </form>
+
+@if(!$course->is_template)
+<form method="POST" action="{{ route('teacher.courses.generateLessons', $course) }}" style="display:inline;">
+    @csrf
+    <button type="submit"
+            style="margin-left:8px;padding:7px 14px;background:#4a90d9;color:#fff;border:none;border-radius:5px;cursor:pointer;">
+        Згенерувати заняття
+    </button>
+</form>
+@if(session('info'))
+<p style="color:#888;margin-top:6px;">{{ session('info') }}</p>
+@endif
+@endif
+
+<script>
+function toggleSchedLocation(suffix, val) {
+    document.getElementById('sched-loc-' + suffix).style.display = val === 'offline' ? 'block' : 'none';
+}
+function filterClassrooms(suffix, locationId) {
+    const sel = document.getElementById('sched-room-sel-' + suffix);
+    Array.from(sel.options).forEach(o => {
+        o.style.display = (!o.dataset.location || o.dataset.location == locationId || !locationId) ? '' : 'none';
+    });
+    sel.value = '';
+}
+</script>
 
 <form method="POST" action="{{ route('teacher.courses.duplicate', $course) }}"
       onsubmit="this.querySelector('button').disabled = true">
@@ -62,25 +141,23 @@
     <button type="submit">Скопіювати курс як шаблон</button>
 </form>
 
-@if(auth()->user()->isSuperAdmin())
+@if(auth()->user()->isAdmin())
+{{-- Admin/superadmin: direct delete --}}
 <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" id="delete-course-form">
     @csrf @method('DELETE')
     <button type="button" onclick="showDeleteConfirm()">Видалити курс</button>
 </form>
-
-<div id="delete-confirm" style="display:none; border:1px solid red; padding:15px; margin-top:10px;">
-    <p><strong>Ви впевнені, що хочете видалити курс «{{ $course->title }}»?</strong></p>
-    <p>Ця дія незворотна. Введіть назву курсу для підтвердження:</p>
+<div id="delete-confirm" style="display:none;border:1px solid #e74c3c;padding:15px;margin-top:10px;border-radius:6px;">
+    <p><strong>Видалити курс «{{ $course->title }}»?</strong></p>
+    <p style="font-size:.85em;color:#888;">Ця дія незворотна. Введіть назву курсу для підтвердження:</p>
     <input type="text" id="confirm-title" placeholder="{{ $course->title }}">
-    <br><br>
-    <button type="button" id="confirm-delete-btn" disabled onclick="document.getElementById('delete-course-form').submit()">Так, видалити</button>
-    <button type="button" onclick="hideDeleteConfirm()">Скасувати</button>
+    <div style="margin-top:10px;display:flex;gap:8px;">
+        <button type="button" id="confirm-delete-btn" disabled onclick="document.getElementById('delete-course-form').submit()">Так, видалити</button>
+        <button type="button" onclick="hideDeleteConfirm()">Скасувати</button>
+    </div>
 </div>
-
 <script>
-function showDeleteConfirm() {
-    document.getElementById('delete-confirm').style.display = 'block';
-}
+function showDeleteConfirm() { document.getElementById('delete-confirm').style.display = 'block'; }
 function hideDeleteConfirm() {
     document.getElementById('delete-confirm').style.display = 'none';
     document.getElementById('confirm-title').value = '';
@@ -92,6 +169,49 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+
+@elseif(auth()->user()->isTeacher())
+{{-- Teacher: send deletion request --}}
+@php
+    $hasPendingDeletion = \App\Models\DeletionRequest::where('deletable_type', \App\Models\Course::class)
+        ->where('deletable_id', $course->id)->pending()->exists();
+@endphp
+@if($hasPendingDeletion)
+<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:6px;padding:12px;margin-top:10px;">
+    <strong style="color:#c0392b;">Запит на видалення надіслано</strong>
+    <p style="margin:4px 0 0;font-size:.85em;color:#888;">Очікується рішення адміністратора.</p>
+</div>
+@else
+<button type="button" onclick="document.getElementById('del-request-form').style.display='block';this.style.display='none'"
+        style="background:#e74c3c;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;">
+    Видалити курс
+</button>
+<div id="del-request-form" style="display:none;border:1px solid #e74c3c;border-radius:6px;padding:14px;margin-top:8px;">
+    <p style="margin:0 0 8px;font-weight:600;color:#c0392b;">Запит на видалення курсу</p>
+    <form method="POST" action="{{ route('deletion.store') }}">
+        @csrf
+        <input type="hidden" name="deletable_type" value="App\Models\Course">
+        <input type="hidden" name="deletable_id" value="{{ $course->id }}">
+        <textarea name="reason" rows="3" placeholder="Причина видалення (необов'язково)..."
+                  style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:.88rem;resize:vertical;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="submit" style="background:#e74c3c;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
+                Надіслати запит
+            </button>
+            <button type="button" onclick="document.getElementById('del-request-form').style.display='none';this.closest('div').previousElementSibling.style.display=''"
+                    style="background:#e8e8e8;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
+                Скасувати
+            </button>
+        </div>
+    </form>
+</div>
+@if(session('deletion_requested'))
+<p style="color:#27ae60;margin-top:8px;">{{ session('deletion_requested') }}</p>
+@endif
+@if(session('deletion_pending'))
+<p style="color:#e67e22;margin-top:8px;">{{ session('deletion_pending') }}</p>
+@endif
+@endif
 @endif
 
 <hr>

@@ -148,6 +148,13 @@ class TestController extends Controller
 
     public function destroy(Test $test)
     {
+        $user = auth()->user();
+
+        // Teachers cannot directly delete — they must submit a deletion request
+        if ($user->isTeacher()) {
+            abort(403, 'Teachers must submit a deletion request.');
+        }
+
         $courseId = $test->course_id;
         $test->questions()->each(fn($q) => $q->options()->delete() && $q->delete());
         $test->attempts()->delete();

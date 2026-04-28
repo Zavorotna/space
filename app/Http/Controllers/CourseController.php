@@ -152,12 +152,20 @@ class CourseController extends Controller
             $courses = Course::where('is_template', false)->with('teacher')->latest()->get();
             $templates = Course::where('is_template', true)->with('teacher')->latest()->get();
         } else {
+            // Hide courses/templates that this teacher has submitted a pending deletion request for
+            $pendingIds = \App\Models\DeletionRequest::where('requester_id', $user->id)
+                ->where('deletable_type', Course::class)
+                ->pending()
+                ->pluck('deletable_id');
+
             $coTeachingIds = $user->coTeacherCourses()->pluck('courses.id');
             $courses = Course::where('is_template', false)
                 ->where(fn($q) => $q->where('teacher_id', $user->id)->orWhereIn('id', $coTeachingIds))
+                ->whereNotIn('id', $pendingIds)
                 ->with('teacher')->latest()->get();
             $templates = Course::where('is_template', true)
                 ->where(fn($q) => $q->where('teacher_id', $user->id)->orWhereNull('teacher_id'))
+                ->whereNotIn('id', $pendingIds)
                 ->latest()->get();
         }
 
@@ -169,7 +177,8 @@ class CourseController extends Controller
      */
     public function create()
     {
-        return view('teacher.course-create');
+        $locations = \App\Models\Location::where('is_active', true)->with('classrooms')->get();
+        return view('teacher.course-create', compact('locations'));
     }
 
     /**
@@ -178,19 +187,26 @@ class CourseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'program' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'billing_period' => 'required|in:one_time,monthly,per_lesson',
-            'type' => 'required|in:group,individual',
-            'intro_date' => 'nullable|date',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'telegram_link' => 'nullable|url',
+            'title'                  => 'required|string|max:255',
+            'description'            => 'nullable|string',
+            'program'                => 'nullable|string',
+            'price'                  => 'required|numeric|min:0',
+            'billing_period'         => 'required|in:one_time,monthly,per_lesson',
+            'type'                   => 'required|in:group,individual',
+            'intro_date'             => 'nullable|date',
+            'start_date'             => 'nullable|date',
+            'end_date'               => 'nullable|date|after_or_equal:start_date',
+            'telegram_link'          => 'nullable|url',
             'has_graduation_project' => 'boolean',
-            'is_template' => 'boolean',
-            'cover' => 'nullable|image|max:5120',
+            'is_template'            => 'boolean',
+            'cover'                  => 'nullable|image|max:5120',
+            'schedule_days'          => 'nullable|array',
+            'schedule_days.*'        => 'integer|between:1,7',
+            'schedule_start_time'    => 'nullable|date_format:H:i',
+            'schedule_end_time'      => 'nullable|date_format:H:i|after:schedule_start_time',
+            'schedule_mode'          => 'nullable|in:online,offline',
+            'schedule_location_id'   => 'nullable|exists:locations,id',
+            'schedule_classroom_id'  => 'nullable|exists:classrooms,id',
         ]);
 
         $validated['teacher_id'] = $request->user()->isTeacher()
@@ -203,7 +219,14 @@ class CourseController extends Controller
             $course->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
 
-        return redirect()->route('teacher.courses.edit', $course)->with('success', 'Курс створено.');
+        // Auto-generate lessons for the primary teacher
+        $generated = app(\App\Services\ScheduleService::class)
+            ->generateCourseLessons($course, \App\Models\User::find($course->teacher_id));
+
+        $msg = 'Курс створено.';
+        if ($generated > 0) $msg .= " Автоматично додано {$generated} занять до розкладу.";
+
+        return redirect()->route('teacher.courses.edit', $course)->with('success', $msg);
     }
 
     /**
@@ -214,8 +237,9 @@ class CourseController extends Controller
         $this->authorizeCourse($course);
         $course->load(['homeworkAssignments', 'tests.questions.options', 'graduationProject', 'additionalMaterials', 'coTeachers',
             'students' => fn($q) => $q->withPivot(['status', 'is_paid', 'enrolled_at', 'active_until'])]);
-        $teachers = \App\Models\User::whereIn('role', ['teacher', 'admin', 'superadmin'])->orderBy('last_name')->get();
-        return view('teacher.course-edit', compact('course', 'teachers'));
+        $teachers  = \App\Models\User::whereIn('role', ['teacher', 'admin', 'superadmin'])->orderBy('last_name')->get();
+        $locations = \App\Models\Location::where('is_active', true)->with('classrooms')->get();
+        return view('teacher.course-edit', compact('course', 'teachers', 'locations'));
     }
 
     /**
@@ -226,20 +250,27 @@ class CourseController extends Controller
         $this->authorizeCourse($course);
 
         $rules = [
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'program' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'billing_period' => 'required|in:one_time,monthly,per_lesson',
-            'status' => 'required|in:waiting,enrolling,active,completed',
-            'type' => 'required|in:group,individual',
-            'intro_date' => 'nullable|date',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'telegram_link' => 'nullable|url',
+            'title'                  => 'required|string|max:255',
+            'description'            => 'nullable|string',
+            'program'                => 'nullable|string',
+            'price'                  => 'required|numeric|min:0',
+            'billing_period'         => 'required|in:one_time,monthly,per_lesson',
+            'status'                 => 'required|in:waiting,enrolling,active,completed',
+            'type'                   => 'required|in:group,individual',
+            'intro_date'             => 'nullable|date',
+            'start_date'             => 'nullable|date',
+            'end_date'               => 'nullable|date',
+            'telegram_link'          => 'nullable|url',
             'has_graduation_project' => 'boolean',
-            'is_published' => 'boolean',
-            'cover' => 'nullable|image|max:5120',
+            'is_published'           => 'boolean',
+            'cover'                  => 'nullable|image|max:5120',
+            'schedule_days'          => 'nullable|array',
+            'schedule_days.*'        => 'integer|between:1,7',
+            'schedule_start_time'    => 'nullable|date_format:H:i',
+            'schedule_end_time'      => 'nullable|date_format:H:i',
+            'schedule_mode'          => 'nullable|in:online,offline',
+            'schedule_location_id'   => 'nullable|exists:locations,id',
+            'schedule_classroom_id'  => 'nullable|exists:classrooms,id',
         ];
 
         if ($request->user()->isAdmin()) {
@@ -250,8 +281,12 @@ class CourseController extends Controller
 
         $oldTeacherId = $course->teacher_id;
         $course->update(collect($validated)->except('cover')->toArray());
+        $course->refresh();
 
-        // Notify teacher if assigned or changed
+        $scheduleService = app(\App\Services\ScheduleService::class);
+        $generatedMsg = '';
+
+        // If teacher changed → generate for new teacher
         if ($request->user()->isAdmin()
             && isset($validated['teacher_id'])
             && $validated['teacher_id']
@@ -266,6 +301,8 @@ class CourseController extends Controller
                     "Курс: {$course->title}",
                     route('teacher.courses.edit', $course)
                 );
+                $n = $scheduleService->generateCourseLessons($course, $teacher);
+                if ($n > 0) $generatedMsg = " Додано {$n} занять до розкладу.";
             }
         }
 
@@ -273,13 +310,48 @@ class CourseController extends Controller
             $course->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
 
-        return redirect()->route('teacher.courses.edit', $course)->with('success', 'Курс оновлено.');
+        return redirect()->route('teacher.courses.edit', $course)->with('success', 'Курс оновлено.' . $generatedMsg);
+    }
+
+    /**
+     * Manually trigger lesson generation for all teachers on this course
+     */
+    public function generateLessons(Course $course)
+    {
+        $this->authorizeCourse($course);
+
+        if ($course->is_template) {
+            return back()->with('error', 'Для шаблонів заняття не генеруються.');
+        }
+
+        $scheduleService = app(\App\Services\ScheduleService::class);
+        $total = 0;
+
+        // Primary teacher
+        if ($course->teacher_id) {
+            $total += $scheduleService->generateCourseLessons($course, \App\Models\User::find($course->teacher_id));
+        }
+
+        // Co-teachers
+        foreach ($course->coTeachers as $coTeacher) {
+            $total += $scheduleService->generateCourseLessons($course, $coTeacher);
+        }
+
+        if ($total === 0) {
+            return back()->with('info', 'Всі заняття вже існують або розклад курсу не заповнено.');
+        }
+
+        return back()->with('success', "Згенеровано {$total} нових занять.");
     }
 
     public function destroy(Course $course)
     {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403);
+        $user = auth()->user();
+        $this->authorizeCourse($course);
+
+        // Teachers cannot directly delete — they must submit a deletion request
+        if ($user->isTeacher()) {
+            abort(403, 'Teachers must submit a deletion request.');
         }
 
         $course->delete();
@@ -407,7 +479,11 @@ class CourseController extends Controller
             route('teacher.courses.edit', $course)
         );
 
-        return back()->with('success', "Викладача {$user->last_name} {$user->first_name} додано.");
+        $n = app(\App\Services\ScheduleService::class)->generateCourseLessons($course, $user);
+        $msg = "Викладача {$user->last_name} {$user->first_name} додано.";
+        if ($n > 0) $msg .= " Додано {$n} занять до розкладу.";
+
+        return back()->with('success', $msg);
     }
 
     public function removeCoTeacher(Course $course, User $user)

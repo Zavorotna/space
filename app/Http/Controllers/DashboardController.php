@@ -89,7 +89,10 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        $adminBanners = $user->notifications()->unread()->where('type', 'admin_message')->latest()->get();
+        $adminBanners = $user->notifications()->unread()
+            ->whereIn('type', ['admin_message', 'deletion_request'])
+            ->with('deletionRequest.deletable', 'deletionRequest.requester')
+            ->latest()->get();
 
         $data = [
             'pendingApplications'   => \App\Models\CourseApplication::where('status', 'pending')->count(),

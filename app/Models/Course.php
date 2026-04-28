@@ -17,19 +17,34 @@ class Course extends Model implements HasMedia
         'status', 'type', 'intro_date', 'start_date', 'end_date', 'telegram_link',
         'liqpay_merchant_id', 'liqpay_private_key', 'has_graduation_project',
         'template_id', 'is_published', 'is_template',
+        'schedule_days', 'schedule_start_time', 'schedule_end_time',
+        'schedule_mode', 'schedule_location_id', 'schedule_classroom_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'intro_date' => 'date',
-            'start_date' => 'date',
-            'end_date' => 'date',
-            'price' => 'decimal:2',
-            'is_published' => 'boolean',
-            'is_template' => 'boolean',
+            'intro_date'             => 'date',
+            'start_date'             => 'date',
+            'end_date'               => 'date',
+            'price'                  => 'decimal:2',
+            'is_published'           => 'boolean',
+            'is_template'            => 'boolean',
             'has_graduation_project' => 'boolean',
+            'teacher_id'             => 'integer',
+            'schedule_days'          => 'array',
+            'schedule_location_id'   => 'integer',
+            'schedule_classroom_id'  => 'integer',
         ];
+    }
+
+    public function hasSchedule(): bool
+    {
+        return $this->start_date
+            && $this->end_date
+            && !empty($this->schedule_days)
+            && $this->schedule_start_time
+            && $this->schedule_end_time;
     }
 
     public function registerMediaCollections(): void

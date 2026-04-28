@@ -108,6 +108,58 @@ class ScheduleService
     }
 
     /**
+     * Auto-generate lessons for a course teacher based on course schedule fields.
+     * Skips templates, skips dates where a lesson already exists for this teacher+course+date.
+     * Returns the number of lessons created.
+     */
+    public function generateCourseLessons(Course $course, User $teacher): int
+    {
+        if ($course->is_template || !$course->hasSchedule()) {
+            return 0;
+        }
+
+        $days       = array_map('intval', $course->schedule_days); // [1..7] ISO weekdays
+        $startTime  = substr($course->schedule_start_time, 0, 5);
+        $endTime    = substr($course->schedule_end_time, 0, 5);
+        $mode       = $course->schedule_mode ?? 'online';
+        $locationId = $course->schedule_location_id;
+        $classroomId = $course->schedule_classroom_id;
+
+        // Existing dates for this teacher+course to avoid duplicates
+        $existing = Lesson::where('course_id', $course->id)
+            ->where('teacher_id', $teacher->id)
+            ->pluck('date')
+            ->map(fn($d) => (string) $d)
+            ->flip(); // use as a set for O(1) lookup
+
+        $created = 0;
+        $current = $course->start_date->copy();
+
+        while ($current->lte($course->end_date)) {
+            if (in_array($current->isoWeekday(), $days)) {
+                $dateStr = $current->toDateString();
+
+                if (!isset($existing[$dateStr])) {
+                    Lesson::create([
+                        'course_id'    => $course->id,
+                        'teacher_id'   => $teacher->id,
+                        'mode'         => $mode,
+                        'location_id'  => $locationId,
+                        'classroom_id' => $classroomId,
+                        'date'         => $dateStr,
+                        'start_time'   => $startTime,
+                        'end_time'     => $endTime,
+                    ]);
+                    $created++;
+                }
+            }
+            $current->addDay();
+        }
+
+        return $created;
+    }
+
+    /**
      * Confirm attendance for a lesson
      */
     public function confirmAttendance(Lesson $lesson, array $presentStudentIds): void

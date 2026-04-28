@@ -24,26 +24,24 @@
     <button type="submit">Зберегти</button>
 </form>
 
+@if(auth()->user()->isAdmin())
+{{-- Admin/superadmin: direct delete --}}
 <form method="POST" action="{{ route('teacher.tests.destroy', $test) }}" id="delete-test-form" style="margin-top:10px;">
     @csrf @method('DELETE')
     <button type="button" onclick="showTestDeleteConfirm()">Видалити тест</button>
 </form>
-
-<div id="test-delete-confirm" style="display:none; border:1px solid red; padding:15px; margin-top:10px;">
+<div id="test-delete-confirm" style="display:none;border:1px solid #e74c3c;padding:15px;margin-top:10px;border-radius:6px;">
     <p><strong>Видалити тест «{{ $test->title }}»?</strong></p>
-    <p>Буде видалено {{ $test->questions->count() }} питань та всі результати студентів. Дія незворотна.</p>
-    <p>Введіть назву тесту для підтвердження:</p>
+    <p style="font-size:.85em;color:#888;">Буде видалено {{ $test->questions->count() }} питань та всі результати студентів. Введіть назву тесту:</p>
     <input type="text" id="delete-test-input" placeholder="{{ $test->title }}">
-    <br><br>
-    <button type="button" id="confirm-delete-test-btn" disabled
-            onclick="document.getElementById('delete-test-form').submit()">Так, видалити</button>
-    <button type="button" onclick="hideTestDeleteConfirm()">Скасувати</button>
+    <div style="margin-top:10px;display:flex;gap:8px;">
+        <button type="button" id="confirm-delete-test-btn" disabled
+                onclick="document.getElementById('delete-test-form').submit()">Так, видалити</button>
+        <button type="button" onclick="hideTestDeleteConfirm()">Скасувати</button>
+    </div>
 </div>
-
 <script>
-function showTestDeleteConfirm() {
-    document.getElementById('test-delete-confirm').style.display = 'block';
-}
+function showTestDeleteConfirm() { document.getElementById('test-delete-confirm').style.display = 'block'; }
 function hideTestDeleteConfirm() {
     document.getElementById('test-delete-confirm').style.display = 'none';
     document.getElementById('delete-test-input').value = '';
@@ -51,11 +49,51 @@ function hideTestDeleteConfirm() {
 }
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('delete-test-input').addEventListener('input', function () {
-        document.getElementById('confirm-delete-test-btn').disabled =
-            this.value !== '{{ addslashes($test->title) }}';
+        document.getElementById('confirm-delete-test-btn').disabled = this.value !== '{{ addslashes($test->title) }}';
     });
 });
 </script>
+
+@elseif(auth()->user()->isTeacher())
+{{-- Teacher: send deletion request --}}
+@php
+    $hasPendingTestDeletion = \App\Models\DeletionRequest::where('deletable_type', \App\Models\Test::class)
+        ->where('deletable_id', $test->id)->pending()->exists();
+@endphp
+@if($hasPendingTestDeletion)
+<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:6px;padding:12px;margin-top:10px;">
+    <strong style="color:#c0392b;">Запит на видалення надіслано</strong>
+    <p style="margin:4px 0 0;font-size:.85em;color:#888;">Очікується рішення адміністратора.</p>
+</div>
+@else
+<button type="button" onclick="document.getElementById('del-test-request-form').style.display='block';this.style.display='none'"
+        style="background:#e74c3c;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;margin-top:10px;">
+    Видалити тест
+</button>
+<div id="del-test-request-form" style="display:none;border:1px solid #e74c3c;border-radius:6px;padding:14px;margin-top:8px;">
+    <p style="margin:0 0 8px;font-weight:600;color:#c0392b;">Запит на видалення тесту</p>
+    <form method="POST" action="{{ route('deletion.store') }}">
+        @csrf
+        <input type="hidden" name="deletable_type" value="App\Models\Test">
+        <input type="hidden" name="deletable_id" value="{{ $test->id }}">
+        <textarea name="reason" rows="3" placeholder="Причина видалення (необов'язково)..."
+                  style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:.88rem;resize:vertical;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="submit" style="background:#e74c3c;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
+                Надіслати запит
+            </button>
+            <button type="button" onclick="document.getElementById('del-test-request-form').style.display='none'"
+                    style="background:#e8e8e8;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
+                Скасувати
+            </button>
+        </div>
+    </form>
+</div>
+@if(session('deletion_requested'))
+<p style="color:#27ae60;margin-top:8px;">{{ session('deletion_requested') }}</p>
+@endif
+@endif
+@endif
 
 <hr>
 
