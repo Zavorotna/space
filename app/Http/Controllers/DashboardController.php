@@ -74,21 +74,6 @@ class DashboardController extends Controller
         $allUsers = User::whereNotNull('birthday')->get(['id', 'first_name', 'last_name', 'birthday', 'role']);
         $schedBirthdays = $this->birthdaysInRange($allUsers, $start, $end);
 
-        $lessonsNeedingReport = Lesson::with(['course'])
-            ->where('teacher_id', $user->id)
-            ->where(function ($q) {
-                $q->where('date', '<', today())
-                  ->orWhere(function ($q2) {
-                      $q2->where('date', today())
-                         ->where('end_time', '<=', now()->format('H:i:s'));
-                  });
-            })
-            ->whereNull('completion_status')
-            ->orderBy('date', 'desc')
-            ->orderBy('end_time', 'desc')
-            ->limit(10)
-            ->get();
-
         $adminBanners = $user->notifications()->unread()
             ->whereIn('type', ['admin_message', 'deletion_request'])
             ->with('deletionRequest.deletable', 'deletionRequest.requester')
@@ -98,7 +83,6 @@ class DashboardController extends Controller
             'pendingApplications'   => \App\Models\CourseApplication::where('status', 'pending')->count(),
             'pendingWithdrawalsList'=> \App\Models\WithdrawalRequest::with('user')->where('status', 'pending')->latest()->get(),
             'recentTransactions'    => Transaction::with('user')->latest()->limit(20)->get(),
-            'lessonsNeedingReport'  => $lessonsNeedingReport,
             'schedDate'             => $schedDate,
             'schedMode'             => $schedMode,
             'schedLessons'          => $schedLessons,

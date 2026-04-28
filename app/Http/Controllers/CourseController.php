@@ -292,19 +292,20 @@ class CourseController extends Controller
             unset($validated['teacher_id']);
         }
 
-        $oldTeacherId = $course->teacher_id;
-        $course->update(collect($validated)->except('cover')->toArray());
-
         $scheduleService = app(\App\Services\ScheduleService::class);
         $generatedMsg = '';
 
-        // If teacher changed → generate for new teacher
-        if ($request->user()->isAdmin()
-            && isset($validated['teacher_id'])
-            && $validated['teacher_id']
-            && $validated['teacher_id'] != $oldTeacherId
-        ) {
-            $teacher = \App\Models\User::find($validated['teacher_id']);
+        $scheduleChanged = !$course->is_template && $this->scheduleChanged($course, $validated);
+        $oldTeacherId = $course->teacher_id;
+
+        $course->update(collect($validated)->except('cover')->toArray());
+        $course->refresh();
+
+        $newTeacherId = $course->teacher_id;
+
+        // Notify if teacher reassigned
+        if ($request->user()->isAdmin() && $newTeacherId && $newTeacherId != $oldTeacherId) {
+            $teacher = \App\Models\User::find($newTeacherId);
             if ($teacher) {
                 app(\App\Services\NotificationService::class)->notify(
                     $teacher,
@@ -313,6 +314,28 @@ class CourseController extends Controller
                     "Курс: {$course->title}",
                     route('teacher.courses.edit', $course)
                 );
+            }
+        }
+
+        if ($scheduleChanged && $course->hasSchedule()) {
+            // Delete all unstarted lessons and regenerate for all teachers
+            \App\Models\Lesson::where('course_id', $course->id)
+                ->whereNull('completion_status')
+                ->delete();
+            $total = 0;
+            if ($course->teacher_id) {
+                $total += $scheduleService->generateCourseLessons($course, \App\Models\User::find($course->teacher_id));
+            }
+            foreach ($course->coTeachers as $coTeacher) {
+                $total += $scheduleService->generateCourseLessons($course, $coTeacher);
+            }
+            $generatedMsg = $total > 0
+                ? " Розклад змінено, перегенеровано {$total} занять."
+                : " Розклад змінено, незаплановані заняття видалено.";
+        } elseif (!$course->is_template && $newTeacherId && $newTeacherId != $oldTeacherId) {
+            // Only teacher changed — generate lessons for new teacher
+            $teacher = \App\Models\User::find($newTeacherId);
+            if ($teacher) {
                 $n = $scheduleService->generateCourseLessons($course, $teacher);
                 if ($n > 0) $generatedMsg = " Додано {$n} занять до розкладу.";
             }
@@ -323,37 +346,6 @@ class CourseController extends Controller
         }
 
         return redirect()->route('teacher.courses.edit', $course)->with('success', 'Курс оновлено.' . $generatedMsg);
-    }
-
-    /**
-     * Manually trigger lesson generation for all teachers on this course
-     */
-    public function generateLessons(Course $course)
-    {
-        $this->authorizeCourse($course);
-
-        if ($course->is_template) {
-            return back()->with('error', 'Для шаблонів заняття не генеруються.');
-        }
-
-        $scheduleService = app(\App\Services\ScheduleService::class);
-        $total = 0;
-
-        // Primary teacher
-        if ($course->teacher_id) {
-            $total += $scheduleService->generateCourseLessons($course, \App\Models\User::find($course->teacher_id));
-        }
-
-        // Co-teachers
-        foreach ($course->coTeachers as $coTeacher) {
-            $total += $scheduleService->generateCourseLessons($course, $coTeacher);
-        }
-
-        if ($total === 0) {
-            return back()->with('info', 'Всі заняття вже існують або розклад курсу не заповнено.');
-        }
-
-        return back()->with('success', "Згенеровано {$total} нових занять.");
     }
 
     public function destroy(Course $course)
@@ -547,6 +539,33 @@ class CourseController extends Controller
         );
 
         return view('student.course-pay', compact('course', 'paymentData', 'discount', 'finalPrice'));
+    }
+
+    private function scheduleChanged(Course $course, array $validated): bool
+    {
+        foreach (['schedule_start_time', 'schedule_end_time'] as $field) {
+            if (!array_key_exists($field, $validated)) continue;
+            $old = $course->getRawOriginal($field) ? substr($course->getRawOriginal($field), 0, 5) : null;
+            $new = $validated[$field] ? substr((string) $validated[$field], 0, 5) : null;
+            if ($old !== $new) return true;
+        }
+        foreach (['schedule_mode', 'schedule_location_id', 'schedule_classroom_id'] as $field) {
+            if (!array_key_exists($field, $validated)) continue;
+            if ((string) ($course->getRawOriginal($field) ?? '') !== (string) ($validated[$field] ?? '')) return true;
+        }
+        if (array_key_exists('schedule_days', $validated)) {
+            $old = array_map('intval', (array) ($course->schedule_days ?? []));
+            $new = array_map('intval', (array) ($validated['schedule_days'] ?? []));
+            sort($old); sort($new);
+            if ($old !== $new) return true;
+        }
+        foreach (['start_date', 'end_date'] as $field) {
+            if (!array_key_exists($field, $validated)) continue;
+            $old = $course->getRawOriginal($field);
+            $new = $validated[$field] ? (string) $validated[$field] : null;
+            if ($old !== $new) return true;
+        }
+        return false;
     }
 
     /**

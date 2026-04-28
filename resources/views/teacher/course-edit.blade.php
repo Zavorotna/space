@@ -109,15 +109,6 @@
     <button type="submit" class="btn mt-2">Зберегти</button>
 </form>
 
-@if(!$course->is_template)
-<form method="POST" action="{{ route('teacher.courses.generateLessons', $course) }}" class="form-inline">
-    @csrf
-    <button type="submit" class="btn btn-blue">Згенерувати заняття</button>
-</form>
-@if(session('info'))
-<p class="text-muted mt-1">{{ session('info') }}</p>
-@endif
-@endif
 
 <script>
 function toggleSchedLocation(suffix, val) {
