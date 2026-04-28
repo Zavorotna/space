@@ -279,9 +279,17 @@ class CourseController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Ensure schedule_days is explicitly set (absent when no checkboxes checked)
+        if (!array_key_exists('schedule_days', $validated)) {
+            $validated['schedule_days'] = null;
+        }
+        // Guard: schedule_mode must never be null (NOT NULL column)
+        if (empty($validated['schedule_mode'])) {
+            $validated['schedule_mode'] = 'online';
+        }
+
         $oldTeacherId = $course->teacher_id;
         $course->update(collect($validated)->except('cover')->toArray());
-        $course->refresh();
 
         $scheduleService = app(\App\Services\ScheduleService::class);
         $generatedMsg = '';

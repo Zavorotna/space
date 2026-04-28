@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Lesson, Location, Classroom, CalendarEvent};
+use App\Models\{Lesson, Location, Classroom, CalendarEvent, PlatformNotification, User};
 use App\Services\ScheduleService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -83,6 +83,116 @@ class ScheduleController extends Controller
     {
         $lesson->delete();
         return back()->with('success', 'Заняття видалено.');
+    }
+
+    public function cancelLesson(Request $request, Lesson $lesson)
+    {
+        $this->authorizeLesson($lesson);
+
+        $endAt = Carbon::parse($lesson->date->format('Y-m-d') . ' ' . $lesson->end_time);
+        if ($endAt->isPast()) {
+            return back()->with('error', 'Заняття вже відбулось — використайте звіт про заняття.');
+        }
+        if ($lesson->completion_status) {
+            return back()->with('error', 'Заняття вже має статус і не може бути скасоване повторно.');
+        }
+
+        $request->validate(['reason' => 'required|string|max:1000']);
+
+        $lesson->update([
+            'completion_status'   => 'cancelled',
+            'completion_note'     => $request->reason,
+            'completion_noted_at' => now(),
+        ]);
+
+        $this->notifyAdmins(
+            "Заняття скасовано: {$lesson->course->title}",
+            implode("\n", array_filter([
+                "Викладач: {$request->user()->full_name}",
+                "Курс: {$lesson->course->title}",
+                "Дата: {$lesson->date->format('d.m.Y')} {$lesson->start_time}–{$lesson->end_time}",
+                $lesson->location ? "Місце: {$lesson->location->name}" : null,
+                "Причина: {$request->reason}",
+            ]))
+        );
+
+        return back()->with('success', 'Заняття скасовано. Адміністраторів повідомлено.');
+    }
+
+    public function rescheduleLesson(Request $request, Lesson $lesson)
+    {
+        $this->authorizeLesson($lesson);
+
+        $endAt = Carbon::parse($lesson->date->format('Y-m-d') . ' ' . $lesson->end_time);
+        if ($endAt->isPast()) {
+            return back()->with('error', 'Заняття вже відбулось — використайте звіт про заняття.');
+        }
+        if ($lesson->completion_status) {
+            return back()->with('error', 'Заняття вже має статус і не може бути перенесено.');
+        }
+
+        $request->validate([
+            'reason'          => 'required|string|max:1000',
+            'new_date'        => 'required|date|after_or_equal:today',
+            'new_start_time'  => 'required|date_format:H:i',
+            'new_end_time'    => 'required|date_format:H:i|after:new_start_time',
+        ]);
+
+        $oldDate  = $lesson->date->format('d.m.Y');
+        $oldTime  = substr($lesson->start_time, 0, 5) . '–' . substr($lesson->end_time, 0, 5);
+        $newDate  = Carbon::parse($request->new_date)->format('d.m.Y');
+        $newTime  = $request->new_start_time . '–' . $request->new_end_time;
+
+        // Teacher conflict check (skip for self — same lesson)
+        if (Lesson::teacherHasConflict(
+            $lesson->teacher_id,
+            $request->new_date,
+            $request->new_start_time,
+            $request->new_end_time,
+            $lesson->id
+        )) {
+            return back()->with('error', 'Конфлікт: викладач вже зайнятий в цей час.');
+        }
+
+        $lesson->update([
+            'date'       => $request->new_date,
+            'start_time' => $request->new_start_time,
+            'end_time'   => $request->new_end_time,
+        ]);
+
+        $this->notifyAdmins(
+            "Заняття перенесено: {$lesson->course->title}",
+            implode("\n", array_filter([
+                "Викладач: {$request->user()->full_name}",
+                "Курс: {$lesson->course->title}",
+                "Було: {$oldDate} {$oldTime}",
+                "Стало: {$newDate} {$newTime}",
+                "Причина: {$request->reason}",
+            ]))
+        );
+
+        return back()->with('success', 'Заняття перенесено. Адміністраторів повідомлено.');
+    }
+
+    private function authorizeLesson(Lesson $lesson): void
+    {
+        $user = auth()->user();
+        if ($user->isAdmin()) return;
+        if ($user->isTeacher() && $lesson->teacher_id === $user->id) return;
+        abort(403);
+    }
+
+    private function notifyAdmins(string $title, string $message): void
+    {
+        User::whereIn('role', ['admin', 'superadmin'])->each(function ($admin) use ($title, $message) {
+            PlatformNotification::create([
+                'user_id' => $admin->id,
+                'type'    => 'lesson_action',
+                'title'   => $title,
+                'message' => $message,
+                'is_read' => false,
+            ]);
+        });
     }
 
     /**

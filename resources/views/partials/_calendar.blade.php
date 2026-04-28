@@ -194,8 +194,30 @@
     <div class="cal-day">
         @forelse($allItems as $item)
             @if($item['kind'] === 'lesson')
-            @php $l = $item['obj']; @endphp
-            <div class="cal-item cal-item--lesson">
+            @php
+                $l = $item['obj'];
+                $lEndsAt  = \Carbon\Carbon::parse($l->date->format('Y-m-d') . ' ' . $l->end_time);
+                $lCanAct  = !empty($canEdit) && $lEndsAt->isFuture() && !$l->completion_status;
+                $lStatus  = $l->completion_status ?? '';
+                $lStatusLabels = ['full'=>'✅ Повне','partial'=>'⚡ Часткове','cancelled'=>'❌ Скасовано','rescheduled'=>'🔄 Перенесено'];
+            @endphp
+            <div class="cal-item cal-item--lesson {{ $lStatus ? 'cal-item--done' : '' }}"
+                 onclick="openLessonModal(this)" style="cursor:pointer;"
+                 data-lid="{{ $l->id }}"
+                 data-title="{{ e($l->course->title) }}"
+                 data-sub="{{ e($l->title ?? '') }}"
+                 data-date-fmt="{{ $l->date->translatedFormat('d F Y') }}"
+                 data-date-raw="{{ $l->date->format('Y-m-d') }}"
+                 data-start="{{ substr($l->start_time,0,5) }}"
+                 data-end="{{ substr($l->end_time,0,5) }}"
+                 data-mode="{{ $l->mode === 'online' ? 'Онлайн' : 'Офлайн' }}"
+                 data-loc="{{ e($l->location?->name ?? '') }}"
+                 data-room="{{ e($l->classroom?->name ?? '') }}"
+                 data-teacher="{{ e($l->teacher?->full_name ?? '') }}"
+                 data-status="{{ $lStatus }}"
+                 data-status-label="{{ $lStatusLabels[$lStatus] ?? '' }}"
+                 data-note="{{ e($l->completion_note ?? '') }}"
+                 data-can-act="{{ $lCanAct ? '1' : '0' }}">
                 <div class="cal-item-time">{{ substr($l->start_time,0,5) }}<br>{{ substr($l->end_time,0,5) }}</div>
                 <div class="cal-item-body">
                     <strong>{{ $l->course->title }}</strong>
@@ -205,6 +227,7 @@
                         @if($l->location) {{ $l->location->name }} @endif
                         @if($l->classroom) ({{ $l->classroom->name }}) @endif
                         @isset($l->teacher) · {{ $l->teacher->full_name }} @endisset
+                        @if($lStatus) <span style="margin-left:4px;">{{ $lStatusLabels[$lStatus] ?? '' }}</span> @endif
                     </div>
                 </div>
             </div>
@@ -263,8 +286,29 @@
                 <span class="cal-week-num {{ $isT ? 'cal-week-num--today' : '' }}">{{ $d->day }}</span>
             </a>
             @foreach($dl as $l)
-            <div class="cal-week-item cal-week-item--lesson">
-                <div class="cal-wi-time">{{ substr($l->start_time,0,5) }}</div>
+            @php
+                $wEndsAt = \Carbon\Carbon::parse($l->date->format('Y-m-d') . ' ' . $l->end_time);
+                $wCanAct = !empty($canEdit) && $wEndsAt->isFuture() && !$l->completion_status;
+                $wStatus = $l->completion_status ?? '';
+                $wStatusLabels = ['full'=>'✅','partial'=>'⚡','cancelled'=>'❌','rescheduled'=>'🔄'];
+            @endphp
+            <div class="cal-week-item cal-week-item--lesson" onclick="openLessonModal(this)" style="cursor:pointer;"
+                 data-lid="{{ $l->id }}"
+                 data-title="{{ e($l->course->title) }}"
+                 data-sub="{{ e($l->title ?? '') }}"
+                 data-date-fmt="{{ $l->date->translatedFormat('d F Y') }}"
+                 data-date-raw="{{ $l->date->format('Y-m-d') }}"
+                 data-start="{{ substr($l->start_time,0,5) }}"
+                 data-end="{{ substr($l->end_time,0,5) }}"
+                 data-mode="{{ $l->mode === 'online' ? 'Онлайн' : 'Офлайн' }}"
+                 data-loc="{{ e($l->location?->name ?? '') }}"
+                 data-room="{{ e($l->classroom?->name ?? '') }}"
+                 data-teacher="{{ e($l->teacher?->full_name ?? '') }}"
+                 data-status="{{ $wStatus }}"
+                 data-status-label="{{ $wStatusLabels[$wStatus] ?? '' }}"
+                 data-note="{{ e($l->completion_note ?? '') }}"
+                 data-can-act="{{ $wCanAct ? '1' : '0' }}">
+                <div class="cal-wi-time">{{ substr($l->start_time,0,5) }} {{ $wStatus ? ($wStatusLabels[$wStatus] ?? '') : '' }}</div>
                 <div class="cal-wi-title">{{ $l->course->title }}</div>
             </div>
             @endforeach
@@ -406,6 +450,35 @@
 .cal-dot--orange{background:#f5a623;}
 .cal-dot--pink{background:#e84393;}
 .cal-item--birthday{border-left-color:#e84393;background:#fff0f7;}
+.cal-item--done{opacity:.75;}
+
+/* Lesson modal */
+.lm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-end;justify-content:center;}
+.lm-overlay.lm-open{display:flex;}
+.lm-card{background:#fff;border-radius:14px 14px 0 0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:20px 20px 32px;box-shadow:0 -4px 24px rgba(0,0,0,.15);}
+.lm-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;}
+.lm-title{font-size:1.05rem;font-weight:700;margin:0 0 2px;}
+.lm-sub{color:#888;font-size:.85rem;margin:0 0 12px;}
+.lm-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.88rem;}
+.lm-badge{padding:2px 8px;border-radius:4px;background:#f0f0f0;color:#555;font-size:.78rem;}
+.lm-status{padding:3px 10px;border-radius:4px;font-size:.82rem;font-weight:600;}
+.lm-status--cancelled{background:#fdecea;color:#c0392b;}
+.lm-status--full{background:#eafaf1;color:#1e8449;}
+.lm-status--partial{background:#fef9e7;color:#b7950b;}
+.lm-status--rescheduled{background:#eaf4fb;color:#1a6fa8;}
+.lm-divider{border:none;border-top:1px solid #eee;margin:14px 0;}
+.lm-section-title{font-weight:600;font-size:.9rem;margin:0 0 8px;}
+.lm-field{margin-bottom:10px;}
+.lm-field label{display:block;font-size:.78rem;color:#888;margin-bottom:3px;}
+.lm-field input,.lm-field textarea{width:100%;padding:7px 9px;border:1px solid #ddd;border-radius:5px;font-size:.88rem;}
+.lm-field textarea{resize:vertical;}
+.lm-row-time{display:flex;gap:10px;}
+.lm-row-time .lm-field{flex:1;}
+.lm-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.lm-btn{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:500;}
+.lm-btn--cancel{background:#e74c3c;color:#fff;}
+.lm-btn--reschedule{background:#4a90d9;color:#fff;}
+.lm-btn--ghost{background:#e8e8e8;color:#555;}
 
 @media(max-width:600px){
     .cal-week{grid-template-columns:repeat(7,1fr);}
@@ -414,6 +487,73 @@
     .cal-form-grid{grid-template-columns:1fr 1fr;}
 }
 </style>
+
+{{-- ── Lesson detail modal ── --}}
+<div class="lm-overlay" id="lm-overlay" onclick="if(event.target===this)closeLessonModal()">
+<div class="lm-card" id="lm-card">
+    <div class="lm-handle"></div>
+    <p class="lm-title" id="lm-title"></p>
+    <p class="lm-sub" id="lm-sub"></p>
+    <div class="lm-row" id="lm-meta"></div>
+    <div id="lm-status-row" style="margin-bottom:10px;"></div>
+
+    <div id="lm-actions-section">
+        <hr class="lm-divider">
+
+        {{-- Cancel tab button --}}
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <button type="button" class="lm-btn lm-btn--cancel" onclick="lmShowSection('cancel')" id="lm-tab-cancel">Скасувати заняття</button>
+            <button type="button" class="lm-btn lm-btn--reschedule" onclick="lmShowSection('reschedule')" id="lm-tab-reschedule">Перенести заняття</button>
+            <button type="button" class="lm-btn lm-btn--ghost" onclick="closeLessonModal()">Закрити</button>
+        </div>
+
+        {{-- Cancel form --}}
+        <div id="lm-sec-cancel" style="display:none;">
+            <p class="lm-section-title" style="color:#c0392b;">Скасування заняття</p>
+            <form id="lm-form-cancel" method="POST">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <div class="lm-field">
+                    <label>Причина скасування *</label>
+                    <textarea name="reason" rows="3" required placeholder="Вкажіть причину..."></textarea>
+                </div>
+                <div class="lm-actions">
+                    <button type="submit" class="lm-btn lm-btn--cancel">Підтвердити скасування</button>
+                    <button type="button" class="lm-btn lm-btn--ghost" onclick="lmShowSection(null)">Назад</button>
+                </div>
+            </form>
+        </div>
+
+        {{-- Reschedule form --}}
+        <div id="lm-sec-reschedule" style="display:none;">
+            <p class="lm-section-title" style="color:#1a6fa8;">Перенесення заняття</p>
+            <form id="lm-form-reschedule" method="POST">
+                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                <div class="lm-field">
+                    <label>Нова дата *</label>
+                    <input type="date" name="new_date" required id="lm-new-date">
+                </div>
+                <div class="lm-row-time">
+                    <div class="lm-field"><label>Початок *</label><input type="time" name="new_start_time" required id="lm-new-start"></div>
+                    <div class="lm-field"><label>Кінець *</label><input type="time" name="new_end_time" required id="lm-new-end"></div>
+                </div>
+                <div class="lm-field">
+                    <label>Причина перенесення *</label>
+                    <textarea name="reason" rows="3" required placeholder="Вкажіть причину..."></textarea>
+                </div>
+                <div class="lm-actions">
+                    <button type="submit" class="lm-btn lm-btn--reschedule">Підтвердити перенесення</button>
+                    <button type="button" class="lm-btn lm-btn--ghost" onclick="lmShowSection(null)">Назад</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="lm-close-only" style="display:none;margin-top:12px;">
+        <button type="button" class="lm-btn lm-btn--ghost" onclick="closeLessonModal()">Закрити</button>
+    </div>
+</div>
+</div>
+
 <script>
 function calToggleForm(id) {
     const el = document.getElementById(id);
@@ -422,5 +562,61 @@ function calToggleForm(id) {
     document.querySelectorAll('.cal-form').forEach(f => { f.style.display = 'none'; });
     if (!wasOpen) el.style.display = 'block';
 }
+
+function openLessonModal(el) {
+    const d = el.dataset;
+    const lid = d.lid;
+    const statusColors = {cancelled:'lm-status--cancelled',full:'lm-status--full',partial:'lm-status--partial',rescheduled:'lm-status--rescheduled'};
+
+    document.getElementById('lm-title').textContent = d.title;
+    document.getElementById('lm-sub').textContent   = [d.dateFmt, d.start + '–' + d.end, d.sub].filter(Boolean).join('  ·  ');
+
+    const meta = [d.mode, d.loc, d.room, d.teacher].filter(Boolean)
+        .map(t => `<span class="lm-badge">${t}</span>`).join('');
+    document.getElementById('lm-meta').innerHTML = meta;
+
+    const statusRow = document.getElementById('lm-status-row');
+    if (d.status) {
+        const cls = statusColors[d.status] || '';
+        const note = d.note ? `<div style="font-size:.82rem;color:#888;margin-top:4px;">${d.note}</div>` : '';
+        statusRow.innerHTML = `<span class="lm-status ${cls}">${d.statusLabel}</span>${note}`;
+    } else {
+        statusRow.innerHTML = '';
+    }
+
+    const canAct = d.canAct === '1';
+    document.getElementById('lm-actions-section').style.display = canAct ? 'block' : 'none';
+    document.getElementById('lm-close-only').style.display      = canAct ? 'none'  : 'block';
+
+    if (canAct) {
+        const base = '{{ url("/teacher/schedule") }}/' + lid;
+        document.getElementById('lm-form-cancel').action     = base + '/cancel';
+        document.getElementById('lm-form-reschedule').action = base + '/reschedule';
+
+        const today = new Date().toISOString().slice(0,10);
+        document.getElementById('lm-new-date').min   = today;
+        document.getElementById('lm-new-date').value = d.dateRaw;
+        document.getElementById('lm-new-start').value = d.start;
+        document.getElementById('lm-new-end').value   = d.end;
+
+        lmShowSection(null);
+    }
+
+    document.getElementById('lm-overlay').classList.add('lm-open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLessonModal() {
+    document.getElementById('lm-overlay').classList.remove('lm-open');
+    document.body.style.overflow = '';
+}
+
+function lmShowSection(name) {
+    ['cancel','reschedule'].forEach(s => {
+        document.getElementById('lm-sec-' + s).style.display = (s === name) ? 'block' : 'none';
+    });
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLessonModal(); });
 </script>
 @endonce

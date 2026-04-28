@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Test, TestQuestion, TestOption, TestAttempt, TestAttemptAnswer};
+use App\Models\{Test, TestQuestion, TestOption, TestAttempt, TestAttemptAnswer, Course};
 use App\Services\{CoinRewardService, BonusService, WalletService};
 use Illuminate\Http\Request;
 
@@ -35,8 +35,31 @@ class TestController extends Controller
 
     // ── Teacher: manage tests ──────────────────────────────────
 
+    private function authorizeTest(Test $test): void
+    {
+        $user = auth()->user();
+        if ($user->isAdmin()) return;
+        $course = $test->course;
+        if (!$course) abort(403);
+        if ($user->isTeacher() && $course->teacher_id === $user->id) return;
+        if ($user->isTeacher() && $course->coTeachers()->where('user_id', $user->id)->exists()) return;
+        abort(403);
+    }
+
+    private function authorizeCourseForTest(Course $course): void
+    {
+        $user = auth()->user();
+        if ($user->isAdmin()) return;
+        if ($user->isTeacher() && $course->teacher_id === $user->id) return;
+        if ($user->isTeacher() && $course->coTeachers()->where('user_id', $user->id)->exists()) return;
+        abort(403);
+    }
+
     public function store(Request $request, $courseId)
     {
+        $course = Course::findOrFail($courseId);
+        $this->authorizeCourseForTest($course);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -51,12 +74,15 @@ class TestController extends Controller
 
     public function edit(Test $test)
     {
+        $this->authorizeTest($test);
         $test->load('questions.options');
         return view('test.edit', compact('test'));
     }
 
     public function update(Request $request, Test $test)
     {
+        $this->authorizeTest($test);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',

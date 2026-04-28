@@ -224,6 +224,8 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::delete('/schedule/{lesson}', [ScheduleController::class, 'destroy'])->name('schedule.destroy');
         Route::post('/schedule/{lesson}/attendance', [ScheduleController::class, 'confirmAttendance'])->name('schedule.attendance');
         Route::post('/schedule/{lesson}/complete', [ScheduleController::class, 'reportCompletion'])->name('schedule.complete');
+        Route::post('/schedule/{lesson}/cancel', [ScheduleController::class, 'cancelLesson'])->name('schedule.cancel');
+        Route::post('/schedule/{lesson}/reschedule', [ScheduleController::class, 'rescheduleLesson'])->name('schedule.reschedule');
 
         // Calendar events
         Route::post('/events', [ScheduleController::class, 'storeEvent'])->name('events.store');
