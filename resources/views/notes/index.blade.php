@@ -38,12 +38,12 @@
 @if($receivedNotes->count())
 <h2>Замітки від викладача</h2>
 @foreach($receivedNotes as $note)
-    <div style="border:1px solid #ccc; padding:10px; margin:5px 0; {{ $note->is_read ? '' : 'background:#fffde7;' }}">
+    <div class="card {{ !$note->is_read ? 'card--unread' : '' }}">
         <p><strong>{{ $note->author->last_name ?? '' }} {{ $note->author->first_name ?? '' }}</strong>
             — {{ $note->created_at->format('d.m.Y H:i') }}</p>
         <p>{!! nl2br(e($note->content)) !!}</p>
         @if(!$note->is_read)
-            <form method="POST" action="{{ route('notes.read', $note) }}" style="display:inline;">
+            <form method="POST" action="{{ route('notes.read', $note) }}" class="form-inline">
                 @csrf
                 <button type="submit">Прочитано</button>
             </form>
@@ -58,14 +58,14 @@
     <p>У вас ще немає заміток.</p>
 @else
     @foreach($personalNotes as $note)
-    <div style="border:1px solid #eee; padding:10px; margin:5px 0;">
+    <div class="card">
         <p>{{ $note->created_at->format('d.m.Y H:i') }}</p>
-        <form method="POST" action="{{ route('notes.update', $note) }}" style="display:inline;">
+        <form method="POST" action="{{ route('notes.update', $note) }}" class="form-inline">
             @csrf @method('PUT')
             <textarea name="content" rows="2">{{ $note->content }}</textarea>
             <button type="submit">Оновити</button>
         </form>
-        <form method="POST" action="{{ route('notes.destroy', $note) }}" style="display:inline;"
+        <form method="POST" action="{{ route('notes.destroy', $note) }}" class="form-inline"
               onsubmit="return confirm('Видалити?')">
             @csrf @method('DELETE')
             <button type="submit">Видалити</button>

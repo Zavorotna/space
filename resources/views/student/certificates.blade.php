@@ -8,7 +8,7 @@
     <p>У вас ще немає сертифікатів. Завершіть курс, щоб отримати сертифікат.</p>
 @else
     @foreach($certificates as $cert)
-    <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+    <div class="card-panel">
         <h3>{{ $cert->course->title ?? '—' }}</h3>
         <p>Тип:
             @switch($cert->type)

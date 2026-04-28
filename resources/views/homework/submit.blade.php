@@ -57,7 +57,7 @@
             <h4>Завантажені файли</h4>
             @foreach($submission->getMedia('files') as $media)
                 <div>
-                    <img src="{{ $media->getUrl() }}" alt="{{ $media->file_name }}" style="max-width:200px;">
+                    <img src="{{ $media->getUrl() }}" alt="{{ $media->file_name }}" class="thumb-lg">
                 </div>
             @endforeach
         @endif
@@ -68,7 +68,7 @@
             <h4>Заморозка дедлайну</h4>
             <p>Ефективний дедлайн: {{ $submission->effective_deadline ? \Carbon\Carbon::parse($submission->effective_deadline)->format('d.m.Y') : \Carbon\Carbon::parse($homework->deadline)->format('d.m.Y') }}</p>
             <p>Використано днів заморозки: {{ $submission->frozen_days ?? 0 }} / 5</p>
-            <form method="POST" action="{{ route('homework.freeze', $submission) }}" style="display:inline;">
+            <form method="POST" action="{{ route('homework.freeze', $submission) }}" class="form-inline">
                 @csrf
                 <label>Днів:
                     <select name="days">

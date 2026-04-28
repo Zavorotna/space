@@ -20,7 +20,7 @@
                 <td>{{ $app->user->phone }}</td>
                 <td>{{ $app->created_at->format('d.m.Y H:i') }}</td>
                 <td>
-                    <form method="POST" action="{{ route('teacher.applications.approve', $app) }}" style="display:inline;">
+                    <form method="POST" action="{{ route('teacher.applications.approve', $app) }}" class="form-inline">
                         @csrf
                         <button type="submit">✅ Прийняти</button>
                     </form>

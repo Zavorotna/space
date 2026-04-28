@@ -6,7 +6,6 @@
 
 <h1>Редагування тесту</h1>
 
-{{-- Test details --}}
 <form method="POST" action="{{ route('teacher.tests.update', $test) }}">
     @csrf @method('PUT')
     <div>
@@ -25,16 +24,15 @@
 </form>
 
 @if(auth()->user()->isAdmin())
-{{-- Admin/superadmin: direct delete --}}
-<form method="POST" action="{{ route('teacher.tests.destroy', $test) }}" id="delete-test-form" style="margin-top:10px;">
+<form method="POST" action="{{ route('teacher.tests.destroy', $test) }}" id="delete-test-form" class="mt-2">
     @csrf @method('DELETE')
     <button type="button" onclick="showTestDeleteConfirm()">Видалити тест</button>
 </form>
-<div id="test-delete-confirm" style="display:none;border:1px solid #e74c3c;padding:15px;margin-top:10px;border-radius:6px;">
+<div id="test-delete-confirm" class="confirm-delete" style="display:none;">
     <p><strong>Видалити тест «{{ $test->title }}»?</strong></p>
-    <p style="font-size:.85em;color:#888;">Буде видалено {{ $test->questions->count() }} питань та всі результати студентів. Введіть назву тесту:</p>
+    <p class="text-sm text-muted">Буде видалено {{ $test->questions->count() }} питань та всі результати студентів. Введіть назву тесту:</p>
     <input type="text" id="delete-test-input" placeholder="{{ $test->title }}">
-    <div style="margin-top:10px;display:flex;gap:8px;">
+    <div class="confirm-delete__row">
         <button type="button" id="confirm-delete-test-btn" disabled
                 onclick="document.getElementById('delete-test-form').submit()">Так, видалити</button>
         <button type="button" onclick="hideTestDeleteConfirm()">Скасувати</button>
@@ -55,53 +53,48 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 @elseif(auth()->user()->isTeacher())
-{{-- Teacher: send deletion request --}}
 @php
     $hasPendingTestDeletion = \App\Models\DeletionRequest::where('deletable_type', \App\Models\Test::class)
         ->where('deletable_id', $test->id)->pending()->exists();
 @endphp
 @if($hasPendingTestDeletion)
-<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:6px;padding:12px;margin-top:10px;">
-    <strong style="color:#c0392b;">Запит на видалення надіслано</strong>
-    <p style="margin:4px 0 0;font-size:.85em;color:#888;">Очікується рішення адміністратора.</p>
+<div class="dr-pending">
+    <strong>Запит на видалення надіслано</strong>
+    <p class="text-sm text-muted">Очікується рішення адміністратора.</p>
 </div>
 @else
 <button type="button" onclick="document.getElementById('del-test-request-form').style.display='block';this.style.display='none'"
-        style="background:#e74c3c;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;margin-top:10px;">
+        class="btn btn-danger mt-2">
     Видалити тест
 </button>
-<div id="del-test-request-form" style="display:none;border:1px solid #e74c3c;border-radius:6px;padding:14px;margin-top:8px;">
-    <p style="margin:0 0 8px;font-weight:600;color:#c0392b;">Запит на видалення тесту</p>
+<div id="del-test-request-form" class="dr-box" style="display:none;">
+    <p class="dr-box__title">Запит на видалення тесту</p>
     <form method="POST" action="{{ route('deletion.store') }}">
         @csrf
         <input type="hidden" name="deletable_type" value="App\Models\Test">
         <input type="hidden" name="deletable_id" value="{{ $test->id }}">
-        <textarea name="reason" rows="3" placeholder="Причина видалення (необов'язково)..."
-                  style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:.88rem;resize:vertical;"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-            <button type="submit" style="background:#e74c3c;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
-                Надіслати запит
-            </button>
+        <textarea name="reason" rows="3" placeholder="Причина видалення (необов'язково)..."></textarea>
+        <div class="flex-row mt-1">
+            <button type="submit" class="btn btn-sm btn-danger">Надіслати запит</button>
             <button type="button" onclick="document.getElementById('del-test-request-form').style.display='none'"
-                    style="background:#e8e8e8;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
+                    class="btn btn-sm btn-ghost">
                 Скасувати
             </button>
         </div>
     </form>
 </div>
 @if(session('deletion_requested'))
-<p style="color:#27ae60;margin-top:8px;">{{ session('deletion_requested') }}</p>
+<p class="text-success mt-1">{{ session('deletion_requested') }}</p>
 @endif
 @endif
 @endif
 
 <hr>
 
-{{-- Existing questions --}}
 <h2>Питання ({{ $test->questions->count() }})</h2>
 
 @foreach($test->questions as $index => $question)
-<div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+<div class="question-card">
     <form method="POST" action="{{ route('teacher.tests.updateQuestion', $question) }}">
         @csrf @method('PUT')
         <strong>Питання {{ $index + 1 }}</strong>
@@ -140,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <button type="submit">Оновити питання</button>
     </form>
 
-    <form method="POST" action="{{ route('teacher.tests.deleteQuestion', $question) }}" style="display:inline;"
+    <form method="POST" action="{{ route('teacher.tests.deleteQuestion', $question) }}" class="form-inline"
           onsubmit="return confirm('Видалити це питання?')">
         @csrf @method('DELETE')
         <button type="submit">Видалити питання</button>
@@ -150,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <hr>
 
-{{-- Add new question --}}
 <h2>Додати нове питання</h2>
 <form method="POST" action="{{ route('teacher.tests.addQuestion', $test) }}" id="new-question-form">
     @csrf
@@ -189,14 +181,13 @@ document.addEventListener('DOMContentLoaded', function () {
 </form>
 
 <script>
-// Handle checkboxes: ensure is_correct sends proper value
 document.querySelectorAll('form').forEach(form => {
     form.addEventListener('submit', function() {
         this.querySelectorAll('.fallback-correct').forEach(hidden => {
             const checkbox = hidden.previousElementSibling?.querySelector('input[type="checkbox"]')
                 || hidden.parentElement.querySelector('input[type="checkbox"]');
             if (checkbox && checkbox.checked) {
-                hidden.disabled = true; // don't send fallback 0
+                hidden.disabled = true;
             }
         });
     });

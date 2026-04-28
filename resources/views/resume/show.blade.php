@@ -6,7 +6,7 @@
 
 <div>
     @if($resume->user->getFirstMediaUrl('avatar'))
-        <img src="{{ $resume->user->getFirstMediaUrl('avatar') }}" alt="Аватар" style="width:100px; height:100px; border-radius:50%;">
+        <img src="{{ $resume->user->getFirstMediaUrl('avatar') }}" alt="Аватар" class="avatar avatar-lg">
     @endif
 
     {{-- VIP slider --}}
@@ -14,7 +14,7 @@
         <div id="avatar-slider">
             @foreach($resume->user->getMedia('extra_avatars') as $i => $avatar)
                 <img src="{{ $avatar->getUrl() }}" alt="Аватар {{ $i+1 }}"
-                     style="width:80px; height:80px; border-radius:50%; display:{{ $i === 0 ? 'inline-block' : 'none' }};"
+                     class="avatar avatar-md" style="display:{{ $i === 0 ? 'inline-block' : 'none' }};"
                      class="extra-avatar">
             @endforeach
             @if($resume->user->getMedia('extra_avatars')->count() > 1)

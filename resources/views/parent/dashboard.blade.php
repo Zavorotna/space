@@ -9,14 +9,14 @@
 @else
     @foreach($childrenData as $data)
     @php $child = $data['child']; @endphp
-    <div style="border:2px solid #333; padding:15px; margin:15px 0;">
+    <div class="parent-child-block">
         <h2>{{ $child->last_name }} {{ $child->first_name }}</h2>
 
         {{-- Active courses --}}
         <h3>Активні курси</h3>
         @if($data['courses']->count())
             @foreach($data['courses'] as $course)
-                <div style="border:1px solid #ccc; padding:8px; margin:5px 0;">
+                <div class="card">
                     <p><strong>{{ $course->title }}</strong></p>
                     <p>Викладач: {{ $course->teacher->last_name ?? '' }} {{ $course->teacher->first_name ?? '' }}</p>
                     <p>Успішність: {{ $course->pivot->success_rate ?? 0 }}%</p>
@@ -50,7 +50,7 @@
         <h3>Замітки від викладачів (останні 10)</h3>
         @if($data['notes']->count())
             @foreach($data['notes'] as $note)
-                <div style="border:1px solid #eee; padding:5px; margin:3px 0;">
+                <div class="card">
                     <p><strong>{{ $note->author->last_name ?? '' }} {{ $note->author->first_name ?? '' }}</strong>
                         — {{ $note->created_at->format('d.m.Y H:i') }}</p>
                     <p>{{ $note->content }}</p>

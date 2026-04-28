@@ -67,7 +67,7 @@
                     <td>{{ $item->used_count }}</td>
                     <td>
                         @if($item->quantity > 0)
-                        <form method="POST" action="{{ route('bonuses.sell', $item) }}" style="display:inline;"
+                        <form method="POST" action="{{ route('bonuses.sell', $item) }}" class="form-inline"
                               onsubmit="return confirm('Продати за -10%?')">
                             @csrf
                             <button type="submit">Продати (-10%)</button>

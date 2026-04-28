@@ -49,25 +49,25 @@
     <div>
         <label>Фото</label>
         @if($course->getFirstMediaUrl('cover'))
-            <div><img src="{{ $course->getFirstMediaUrl('cover') }}" alt="Обкладинка" style="max-width:200px; display:block; margin-bottom:6px;"></div>
+            <div><img src="{{ $course->getFirstMediaUrl('cover') }}" alt="Обкладинка" class="course-cover"></div>
         @endif
         <input type="file" name="cover" accept="image/*">
     </div>
 
     <hr>
     <h3>Розклад занять</h3>
-    <p style="font-size:.85em;color:#888;">Змінення розкладу тут не перегенеровує вже існуючі заняття. Щоб додати нові — натисніть «Згенерувати заняття» після збереження.</p>
+    <p class="text-sm text-muted">Змінення розкладу тут не перегенеровує вже існуючі заняття. Щоб додати нові — натисніть «Згенерувати заняття» після збереження.</p>
     <div>
         <label>Дні тижня</label><br>
         @foreach([1=>'Пн',2=>'Вт',3=>'Ср',4=>'Чт',5=>'Пт',6=>'Сб',7=>'Нд'] as $num => $label)
-        <label style="margin-right:10px;">
+        <label class="schedule-day-label">
             <input type="checkbox" name="schedule_days[]" value="{{ $num }}"
                    @checked(is_array($course->schedule_days) && in_array($num, $course->schedule_days))>
             {{ $label }}
         </label>
         @endforeach
     </div>
-    <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+    <div class="schedule-time-row">
         <div><label>Початок заняття</label><br>
             <input type="time" name="schedule_start_time" value="{{ $course->schedule_start_time ? substr($course->schedule_start_time,0,5) : '' }}"></div>
         <div><label>Кінець заняття</label><br>
@@ -80,7 +80,7 @@
             </select>
         </div>
     </div>
-    <div id="sched-loc-edit" style="display:{{ $course->schedule_mode==='offline'?'block':'none' }};margin-top:8px;">
+    <div id="sched-loc-edit" class="schedule-loc-block" style="display:{{ $course->schedule_mode==='offline'?'block':'none' }};">
         <div>
             <label>Локація</label><br>
             <select name="schedule_location_id" id="sched-loc-sel-edit" onchange="filterClassrooms('edit',this.value)">
@@ -90,7 +90,7 @@
                 @endforeach
             </select>
         </div>
-        <div style="margin-top:6px;">
+        <div class="mt-1">
             <label>Аудиторія</label><br>
             <select name="schedule_classroom_id" id="sched-room-sel-edit">
                 <option value="">— Оберіть —</option>
@@ -106,19 +106,16 @@
         </div>
     </div>
 
-    <button type="submit" style="margin-top:14px;">Зберегти</button>
+    <button type="submit" class="btn mt-2">Зберегти</button>
 </form>
 
 @if(!$course->is_template)
-<form method="POST" action="{{ route('teacher.courses.generateLessons', $course) }}" style="display:inline;">
+<form method="POST" action="{{ route('teacher.courses.generateLessons', $course) }}" class="form-inline">
     @csrf
-    <button type="submit"
-            style="margin-left:8px;padding:7px 14px;background:#4a90d9;color:#fff;border:none;border-radius:5px;cursor:pointer;">
-        Згенерувати заняття
-    </button>
+    <button type="submit" class="btn btn-blue">Згенерувати заняття</button>
 </form>
 @if(session('info'))
-<p style="color:#888;margin-top:6px;">{{ session('info') }}</p>
+<p class="text-muted mt-1">{{ session('info') }}</p>
 @endif
 @endif
 
@@ -147,11 +144,11 @@ function filterClassrooms(suffix, locationId) {
     @csrf @method('DELETE')
     <button type="button" onclick="showDeleteConfirm()">Видалити курс</button>
 </form>
-<div id="delete-confirm" style="display:none;border:1px solid #e74c3c;padding:15px;margin-top:10px;border-radius:6px;">
+<div id="delete-confirm" class="confirm-delete" style="display:none;">
     <p><strong>Видалити курс «{{ $course->title }}»?</strong></p>
-    <p style="font-size:.85em;color:#888;">Ця дія незворотна. Введіть назву курсу для підтвердження:</p>
+    <p class="text-sm text-muted">Ця дія незворотна. Введіть назву курсу для підтвердження:</p>
     <input type="text" id="confirm-title" placeholder="{{ $course->title }}">
-    <div style="margin-top:10px;display:flex;gap:8px;">
+    <div class="confirm-delete__row">
         <button type="button" id="confirm-delete-btn" disabled onclick="document.getElementById('delete-course-form').submit()">Так, видалити</button>
         <button type="button" onclick="hideDeleteConfirm()">Скасувати</button>
     </div>
@@ -177,39 +174,36 @@ document.addEventListener('DOMContentLoaded', function () {
         ->where('deletable_id', $course->id)->pending()->exists();
 @endphp
 @if($hasPendingDeletion)
-<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:6px;padding:12px;margin-top:10px;">
-    <strong style="color:#c0392b;">Запит на видалення надіслано</strong>
-    <p style="margin:4px 0 0;font-size:.85em;color:#888;">Очікується рішення адміністратора.</p>
+<div class="dr-pending">
+    <strong>Запит на видалення надіслано</strong>
+    <p class="text-sm text-muted">Очікується рішення адміністратора.</p>
 </div>
 @else
 <button type="button" onclick="document.getElementById('del-request-form').style.display='block';this.style.display='none'"
-        style="background:#e74c3c;color:#fff;border:none;padding:7px 14px;border-radius:5px;cursor:pointer;">
+        class="btn btn-danger">
     Видалити курс
 </button>
-<div id="del-request-form" style="display:none;border:1px solid #e74c3c;border-radius:6px;padding:14px;margin-top:8px;">
-    <p style="margin:0 0 8px;font-weight:600;color:#c0392b;">Запит на видалення курсу</p>
+<div id="del-request-form" class="dr-box" style="display:none;">
+    <p class="dr-box__title">Запит на видалення курсу</p>
     <form method="POST" action="{{ route('deletion.store') }}">
         @csrf
         <input type="hidden" name="deletable_type" value="App\Models\Course">
         <input type="hidden" name="deletable_id" value="{{ $course->id }}">
-        <textarea name="reason" rows="3" placeholder="Причина видалення (необов'язково)..."
-                  style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:.88rem;resize:vertical;"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-            <button type="submit" style="background:#e74c3c;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
-                Надіслати запит
-            </button>
+        <textarea name="reason" rows="3" placeholder="Причина видалення (необов'язково)..."></textarea>
+        <div class="flex-row mt-1">
+            <button type="submit" class="btn btn-sm btn-danger">Надіслати запит</button>
             <button type="button" onclick="document.getElementById('del-request-form').style.display='none';this.closest('div').previousElementSibling.style.display=''"
-                    style="background:#e8e8e8;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;">
+                    class="btn btn-sm btn-ghost">
                 Скасувати
             </button>
         </div>
     </form>
 </div>
 @if(session('deletion_requested'))
-<p style="color:#27ae60;margin-top:8px;">{{ session('deletion_requested') }}</p>
+<p class="text-success mt-1">{{ session('deletion_requested') }}</p>
 @endif
 @if(session('deletion_pending'))
-<p style="color:#e67e22;margin-top:8px;">{{ session('deletion_pending') }}</p>
+<p class="text-warn mt-1">{{ session('deletion_pending') }}</p>
 @endif
 @endif
 @endif
@@ -221,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     <div>
         {{ $coTeacher->last_name }} {{ $coTeacher->first_name }} ({{ $coTeacher->role }})
         @if(auth()->user()->isAdmin())
-        <form method="POST" action="{{ route('teacher.courses.coTeachers.remove', [$course, $coTeacher]) }}" style="display:inline;">
+        <form method="POST" action="{{ route('teacher.courses.coTeachers.remove', [$course, $coTeacher]) }}" class="form-inline">
             @csrf @method('DELETE')
             <button type="submit" onclick="return confirm('Видалити співвикладача?')">Видалити</button>
         </form>
@@ -250,21 +244,21 @@ document.addEventListener('DOMContentLoaded', function () {
 <a href="{{ route('teacher.courses.applications', $course) }}">Заявки</a>
 
 @if($course->students->count())
-<div style="max-height: {{ $course->students->count() > 10 ? '400px' : 'none' }}; overflow-y: {{ $course->students->count() > 10 ? 'auto' : 'visible' }}; border: 1px solid #ddd; margin: 10px 0;">
-    <table style="width:100%; border-collapse:collapse;">
+<div class="students-table-wrap {{ $course->students->count() > 10 ? 'students-table-wrap--scrollable' : '' }}">
+    <table class="data-table">
         <thead>
             <tr>
-                <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #ddd;">Студент</th>
-                <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #ddd;">Статус</th>
-                <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #ddd;">Оплата</th>
-                <th style="padding:6px 8px; text-align:left; border-bottom:1px solid #ddd;">Записаний</th>
+                <th>Студент</th>
+                <th>Статус</th>
+                <th>Оплата</th>
+                <th>Записаний</th>
             </tr>
         </thead>
         <tbody>
         @foreach($course->students as $student)
-            <tr style="border-bottom:1px solid #eee;">
-                <td style="padding:6px 8px;"><a href="{{ route('profile.show', $student) }}">{{ $student->last_name }} {{ $student->first_name }}</a></td>
-                <td style="padding:6px 8px;">
+            <tr>
+                <td><a href="{{ route('profile.show', $student) }}">{{ $student->last_name }} {{ $student->first_name }}</a></td>
+                <td>
                     @switch($student->pivot->status)
                         @case('active') Активний @break
                         @case('completed') Завершив @break
@@ -272,8 +266,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         @default {{ $student->pivot->status }}
                     @endswitch
                 </td>
-                <td style="padding:6px 8px;">{{ $student->pivot->is_paid ? '✅' : '❌' }}</td>
-                <td style="padding:6px 8px;">{{ $student->pivot->enrolled_at ? \Carbon\Carbon::parse($student->pivot->enrolled_at)->format('d.m.Y') : '—' }}</td>
+                <td>{{ $student->pivot->is_paid ? '✅' : '❌' }}</td>
+                <td>{{ $student->pivot->enrolled_at ? \Carbon\Carbon::parse($student->pivot->enrolled_at)->format('d.m.Y') : '—' }}</td>
             </tr>
         @endforeach
         </tbody>

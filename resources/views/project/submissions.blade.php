@@ -14,7 +14,7 @@
     <p>Ще немає здач.</p>
 @else
     @foreach($submissions as $sub)
-    <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+    <div class="card-panel">
         <h3>{{ $sub->user->last_name }} {{ $sub->user->first_name }}</h3>
         <p>Статус:
             @switch($sub->status)

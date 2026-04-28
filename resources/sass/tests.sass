@@ -1,0 +1,24 @@
+@use 'vars' as *
+
+// ── Question card ─────────────────────────────────────────────────
+.question-card
+  border: 1px solid #ccc
+  padding: 10px
+  margin: 10px 0
+
+// ── Test result answer indicator ──────────────────────────────────
+.answer-indicator
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  width: 30px
+  height: 30px
+  text-align: center
+  line-height: 30px
+  border: 1px solid
+  &--correct
+    border-color: green
+    color: green
+  &--wrong
+    border-color: red
+    color: red

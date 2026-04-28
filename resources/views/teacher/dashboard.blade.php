@@ -19,21 +19,21 @@
 
 {{-- Lesson completion reports --}}
 @if($lessonsNeedingReport->count())
-<div style="border:2px solid #e67e22;padding:15px;margin:15px 0;border-radius:8px;">
-    <h2 style="color:#e67e22;margin-top:0;">Потрібен звіт ({{ $lessonsNeedingReport->count() }})</h2>
+<div class="report-section">
+    <h2>Потрібен звіт ({{ $lessonsNeedingReport->count() }})</h2>
     @foreach($lessonsNeedingReport as $lesson)
     @php $isIndividual = $lesson->course->type === 'individual'; @endphp
-    <div style="border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:4px;">
+    <div class="report-item">
         <strong>{{ $lesson->date->format('d.m.Y') }}</strong>
         · {{ $lesson->course->title }}
         {{ $lesson->title ? "· {$lesson->title}" : '' }}
         · {{ $lesson->start_time }}–{{ $lesson->end_time }}
         ({{ $lesson->plannedMinutes() }} хв)
-        <span style="color:#888;font-size:.85em;">{{ $isIndividual ? 'Індивідуальне' : 'Групове' }}</span>
+        <span class="text-sm text-muted">{{ $isIndividual ? 'Індивідуальне' : 'Групове' }}</span>
 
-        <form method="POST" action="{{ route('teacher.schedule.complete', $lesson) }}" style="margin-top:8px;">
+        <form method="POST" action="{{ route('teacher.schedule.complete', $lesson) }}" class="mt-1">
             @csrf
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;">
+            <div class="flex-row flex-start">
                 <div>
                     <label>Статус</label><br>
                     @if($isIndividual)
@@ -56,26 +56,26 @@
                 <div id="minutes-{{ $lesson->id }}" style="display:none;">
                     <label>Фактично годин</label><br>
                     <input type="number" name="actual_hours" min="0.5" max="10" step="0.5"
-                           placeholder="{{ round($lesson->plannedMinutes() / 60, 1) }}" style="width:70px;">
+                           placeholder="{{ round($lesson->plannedMinutes() / 60, 1) }}" class="input-sm">
                 </div>
                 @endif
                 <div>
                     <label>Примітка</label><br>
-                    <input type="text" name="completion_note" placeholder="необов'язково" style="width:200px;">
+                    <input type="text" name="completion_note" placeholder="необов'язково" class="input-md">
                 </div>
             </div>
-            <div id="makeup-{{ $lesson->id }}" style="display:none;margin-top:8px;padding:8px;background:#fff8e1;border-radius:4px;">
+            <div id="makeup-{{ $lesson->id }}" class="makeup-panel" style="display:none;">
                 <label><input type="checkbox" name="schedule_makeup" value="1"
                               id="makeup-cb-{{ $lesson->id }}"
                               onchange="toggleMakeupDate({{ $lesson->id }})">
                     Запланувати відпрацювання</label>
-                <div id="makeup-date-{{ $lesson->id }}" style="display:none;margin-top:6px;">
-                    <input type="date" name="makeup_date" style="margin-right:4px;">
-                    <input type="time" name="makeup_start" style="margin-right:4px;">
+                <div id="makeup-date-{{ $lesson->id }}" class="makeup-date-row" style="display:none;">
+                    <input type="date" name="makeup_date">
+                    <input type="time" name="makeup_start">
                     <input type="time" name="makeup_end">
                 </div>
             </div>
-            <button type="submit" style="margin-top:8px;">Зберегти звіт</button>
+            <button type="submit" class="btn mt-1">Зберегти звіт</button>
         </form>
     </div>
     @endforeach
@@ -89,14 +89,14 @@ function toggleFields(id, status, isIndividual) {
 }
 function toggleMakeupDate(id) {
     const cb = document.getElementById('makeup-cb-' + id);
-    document.getElementById('makeup-date-' + id).style.display = cb.checked ? 'block' : 'none';
+    document.getElementById('makeup-date-' + id).style.display = cb.checked ? 'flex' : 'none';
 }
 </script>
 @endif
 
 <h2>Курси</h2>
 @foreach($courses as $course)
-<div style="margin-bottom:8px;">
+<div class="mb-1">
     <strong>{{ $course->title }}</strong>
     @php
         $progress = 0;
@@ -108,9 +108,9 @@ function toggleMakeupDate(id) {
     @endphp
     {{ $progress }}%
     <progress value="{{ $progress }}" max="100"></progress>
-    <span style="font-size:.85em;color:#888;">{{ $course->start_date?->format('d.m') }} — {{ $course->end_date?->format('d.m') }}</span>
+    <span class="text-sm text-muted">{{ $course->start_date?->format('d.m') }} — {{ $course->end_date?->format('d.m') }}</span>
     @if($course->applications()->where('status','pending')->count() > 0)
-    <a href="{{ route('teacher.courses.applications', $course) }}" style="font-size:.85em;">
+    <a href="{{ route('teacher.courses.applications', $course) }}" class="text-sm">
         {{ $course->applications()->where('status','pending')->count() }} заявок
     </a>
     @endif
@@ -138,7 +138,7 @@ function toggleMakeupDate(id) {
 <a href="{{ route('wallet.withdraw') }}">вивести</a>
 
 <h3>Транзакції</h3>
-<table>
+<table class="data-table">
     <thead><tr><th>Дата</th><th>Опис</th><th>Сума</th></tr></thead>
     <tbody>
     @foreach($transactions as $tx)

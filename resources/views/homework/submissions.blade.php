@@ -12,7 +12,7 @@
     <p>Ще немає здач.</p>
 @else
     @foreach($submissions as $sub)
-    <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+    <div class="card-panel">
         <h3>{{ $sub->user->last_name }} {{ $sub->user->first_name }}</h3>
         <p>Статус:
             @switch($sub->status)
@@ -29,9 +29,9 @@
         @if($sub->getMedia('files')->count())
             <h4>Файли:</h4>
             @foreach($sub->getMedia('files') as $media)
-                <div style="display:inline-block; margin:5px;">
+                <div class="thumb-wrap">
                     <a href="{{ $media->getUrl() }}" target="_blank">
-                        <img src="{{ $media->getUrl() }}" alt="{{ $media->file_name }}" style="max-width:150px; max-height:150px;">
+                        <img src="{{ $media->getUrl() }}" alt="{{ $media->file_name }}" class="thumb">
                     </a>
                 </div>
             @endforeach

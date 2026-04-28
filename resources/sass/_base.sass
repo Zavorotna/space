@@ -1,0 +1,574 @@
+@use 'vars' as *
+
+// ── Reset ─────────────────────────────────────────────────────────
+*, *::before, *::after
+  box-sizing: border-box
+  margin: 0
+  padding: 0
+
+// ── Body & Typography ─────────────────────────────────────────────
+body
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
+  font-size: 1rem
+  color: #222
+  background: #f5f6fa
+  line-height: 1.5
+
+h1
+  font-size: 1.4rem
+  margin-bottom: 16px
+
+h2
+  font-size: 1.15rem
+  margin: 16px 0 10px
+
+h3
+  font-size: 1rem
+  margin: 12px 0 8px
+
+h4
+  font-size: .92rem
+  margin: 10px 0 6px
+
+p
+  margin-bottom: 6px
+  &:last-child
+    margin-bottom: 0
+
+a
+  color: $blue
+  &:hover
+    text-decoration: underline
+
+hr
+  border: none
+  border-top: 1px solid $border-light
+  margin: 16px 0
+
+ul, ol
+  padding-left: 18px
+
+progress
+  display: block
+  width: 100%
+  height: 8px
+
+details summary
+  cursor: pointer
+
+// ── Wrapper ───────────────────────────────────────────────────────
+main
+  padding: 20px 16px
+  max-width: $main-max
+  margin: 0 auto
+
+footer
+  display: none
+
+// ── Top bar ───────────────────────────────────────────────────────
+.topbar
+  display: flex
+  align-items: center
+  justify-content: space-between
+  background: $dark
+  color: #fff
+  padding: 0 16px
+  height: $topbar-h
+  position: sticky
+  top: 0
+  z-index: 100
+
+.topbar-left
+  display: flex
+  align-items: center
+  gap: 12px
+
+.topbar-logo
+  font-weight: 700
+  font-size: 1.1rem
+  color: #fff
+  text-decoration: none
+  letter-spacing: .03em
+  &:hover
+    text-decoration: none
+  span
+    color: $accent
+
+// ── Burger ────────────────────────────────────────────────────────
+.burger
+  background: none
+  border: none
+  cursor: pointer
+  display: flex
+  flex-direction: column
+  gap: 5px
+  padding: 4px
+  span
+    display: block
+    width: 22px
+    height: 2px
+    background: #fff
+    border-radius: 2px
+    transition: transform .25s, opacity .25s
+  &.open
+    span:nth-child(1)
+      transform: translateY(7px) rotate(45deg)
+    span:nth-child(2)
+      opacity: 0
+    span:nth-child(3)
+      transform: translateY(-7px) rotate(-45deg)
+
+// ── Topbar icons ──────────────────────────────────────────────────
+.topbar-right
+  display: flex
+  align-items: center
+  gap: 4px
+
+.icon-btn
+  position: relative
+  display: flex
+  align-items: center
+  gap: 5px
+  color: #fff
+  text-decoration: none
+  padding: 6px 10px
+  border-radius: $r-md
+  font-size: .92rem
+  transition: background .2s
+  &:hover
+    background: rgba(255,255,255,.12)
+    text-decoration: none
+  svg
+    flex-shrink: 0
+
+.notif-badge
+  position: absolute
+  top: 2px
+  right: 4px
+  background: $red
+  color: #fff
+  border-radius: 99px
+  font-size: .68rem
+  font-weight: 700
+  min-width: 16px
+  height: 16px
+  display: none
+  align-items: center
+  justify-content: center
+  padding: 0 3px
+  line-height: 1
+  &.visible
+    display: flex
+
+.coin-icon
+  color: $accent
+  font-size: 1.1em
+  line-height: 1
+
+.coin-balance
+  font-weight: 600
+  font-size: .9rem
+
+// ── Nav drawer ────────────────────────────────────────────────────
+.nav-drawer
+  position: fixed
+  top: $topbar-h
+  left: 0
+  width: 260px
+  height: calc(100vh - #{$topbar-h})
+  background: $dark
+  padding: 16px 0
+  transform: translateX(-100%)
+  transition: transform .28s ease
+  z-index: 99
+  overflow-y: auto
+  &.open
+    transform: translateX(0)
+  a, button.nav-logout
+    display: block
+    color: #d0d0e8
+    text-decoration: none
+    padding: 12px 24px
+    font-size: .97rem
+    border: none
+    background: none
+    width: 100%
+    text-align: left
+    cursor: pointer
+    transition: background .18s, color .18s
+    &:hover
+      background: rgba(255,255,255,.08)
+      color: #fff
+  .nav-section
+    font-size: .72rem
+    text-transform: uppercase
+    letter-spacing: .08em
+    color: #6c6c9a
+    padding: 14px 24px 4px
+  .nav-vip
+    padding: 6px 24px
+    color: $accent
+    font-size: .88rem
+
+.nav-divider
+  border: none
+  border-top: 1px solid rgba(255,255,255,.08)
+  margin: 8px 0
+
+.nav-overlay
+  display: none
+  position: fixed
+  inset: #{$topbar-h} 0 0 0
+  background: rgba(0,0,0,.45)
+  z-index: 98
+  &.open
+    display: block
+
+// ── Global alerts ─────────────────────────────────────────────────
+.alert-success, .alert-error, .alert-info
+  padding: 10px 16px
+  margin: 12px auto
+  max-width: $main-max
+  border-radius: $r-md
+  font-size: .93rem
+
+.alert-success
+  background: #d4edda
+  color: #155724
+  border: 1px solid #c3e6cb
+
+.alert-error
+  background: #f8d7da
+  color: #721c24
+  border: 1px solid #f5c6cb
+  ul
+    margin: 0
+    padding-left: 18px
+
+.alert-info
+  background: #d1ecf1
+  color: #0c5460
+  border: 1px solid #bee5eb
+
+// ── Form elements ─────────────────────────────────────────────────
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+input[type="search"],
+select,
+textarea
+  padding: 6px 10px
+  border: 1px solid $border
+  border-radius: $r-sm
+  font-size: .93rem
+  font-family: inherit
+  color: inherit
+  background: #fff
+
+textarea
+  resize: vertical
+  min-height: 70px
+  width: 100%
+
+select
+  cursor: pointer
+
+label
+  display: inline-block
+  margin-bottom: 3px
+  font-size: .93rem
+
+.form-group
+  margin-bottom: 12px
+
+.field-error
+  color: $red
+  font-size: .85em
+  display: block
+  margin-top: 2px
+
+.field-note
+  font-size: .82em
+  color: $muted
+
+.form-inline
+  display: inline
+
+// ── Buttons ───────────────────────────────────────────────────────
+.btn
+  display: inline-block
+  border: none
+  border-radius: $r-sm
+  cursor: pointer
+  padding: 7px 14px
+  font-size: .88rem
+  font-weight: 500
+  line-height: 1.4
+  text-decoration: none
+  &:disabled
+    opacity: .55
+    cursor: not-allowed
+
+.btn-sm
+  padding: 5px 12px
+  font-size: .82rem
+
+.btn-xs
+  padding: 3px 9px
+  font-size: .8rem
+
+.btn-primary
+  background: $accent
+  color: #fff
+
+.btn-danger
+  background: $red
+  color: #fff
+
+.btn-success
+  background: $green
+  color: #fff
+
+.btn-warn
+  background: $orange
+  color: #fff
+
+.btn-muted
+  background: #95a5a6
+  color: #fff
+
+.btn-blue
+  background: $blue
+  color: #fff
+
+.btn-ghost
+  background: #e8e8e8
+  color: #555
+
+// ── Cards / Panels ────────────────────────────────────────────────
+.card
+  border: 1px solid $border
+  padding: 10px
+  margin: 8px 0
+  border-radius: $r-sm
+
+.card--unread
+  background: #e3f2fd
+
+.card--earned
+  background: #e8f5e9
+
+.card-panel
+  border: 1px solid #ccc
+  padding: 10px
+  margin: 10px 0
+
+.card-warn
+  border: 2px solid $orange
+  padding: 15px
+  margin-bottom: 20px
+  border-radius: $r-lg
+
+.card-danger
+  border: 2px solid $red
+  padding: 12px
+  margin-bottom: 14px
+  border-radius: $r-md
+
+// ── Tables ────────────────────────────────────────────────────────
+.data-table
+  width: 100%
+  border-collapse: collapse
+  font-size: .88rem
+  thead tr
+    background: $light-bg
+  th
+    padding: 6px 8px
+    text-align: left
+    border-bottom: 1px solid $border
+    font-weight: 600
+  td
+    padding: 5px 8px
+    border-bottom: 1px solid #f5f5f5
+
+.data-table--bordered
+  th, td
+    border: 1px solid $border
+    padding: 5px 8px
+
+.stats-table
+  border-collapse: collapse
+  td
+    padding: 4px 12px 4px 0
+
+// ── Avatars ───────────────────────────────────────────────────────
+.avatar
+  border-radius: 50%
+  object-fit: cover
+  display: block
+
+.avatar-lg
+  width: 100px
+  height: 100px
+
+.avatar-md
+  width: 80px
+  height: 80px
+
+.avatar-sm
+  width: 60px
+  height: 60px
+
+.avatar-inline
+  display: inline-block
+  margin: 3px
+  border-radius: 50%
+
+// ── Text utilities ────────────────────────────────────────────────
+.text-sm
+  font-size: .85em
+
+.text-xs
+  font-size: .78rem
+
+.text-muted
+  color: $muted
+
+.text-subtle
+  color: $subtle
+
+.text-danger
+  color: $red
+
+.text-success
+  color: $green
+
+.text-warn
+  color: $orange
+
+.text-blue
+  color: $blue
+
+// ── Layout helpers ────────────────────────────────────────────────
+.flex-row
+  display: flex
+  align-items: center
+  gap: 8px
+  flex-wrap: wrap
+
+.flex-between
+  display: flex
+  justify-content: space-between
+  align-items: center
+  flex-wrap: wrap
+
+.flex-start
+  align-items: flex-start !important
+
+.page-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  flex-wrap: wrap
+  margin-bottom: 16px
+
+.section-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  flex-wrap: wrap
+  margin-bottom: 10px
+
+.link-plain
+  text-decoration: none !important
+  color: inherit !important
+
+.mt-0
+  margin-top: 0 !important
+
+.mt-1
+  margin-top: 8px
+
+.mt-2
+  margin-top: 14px
+
+.mb-1
+  margin-bottom: 8px
+
+.mb-2
+  margin-bottom: 14px
+
+.mb-3
+  margin-bottom: 20px
+
+// ── Shared components ─────────────────────────────────────────────
+
+// Notification form — appears on profile pages (student/teacher/generic/parent)
+.notify-form
+  border: 1px solid #e0e0e0
+  border-radius: $r-lg
+  padding: 16px
+  margin-top: 20px
+  h2
+    margin: 0 0 10px
+    font-size: 1rem
+  textarea
+    width: 100%
+    padding: 8px
+    border: 1px solid $border
+    border-radius: $r-sm
+    font-size: .9rem
+    resize: vertical
+  .btn-submit
+    margin-top: 8px
+    padding: 7px 16px
+    background: $accent
+    color: #fff
+    border: none
+    border-radius: 5px
+    cursor: pointer
+    font-size: .88rem
+
+// Deletion request pending notice — teacher sees on course/test edit
+.dr-pending
+  background: #fdecea
+  border: 1px solid $red
+  border-radius: $r-md
+  padding: 12px
+  margin-top: 10px
+  strong
+    color: #c0392b
+
+// Deletion request form box — teacher fills in on course/test edit
+.dr-box
+  border: 1px solid $red
+  border-radius: $r-md
+  padding: 14px
+  margin-top: 8px
+  .dr-box__title
+    margin: 0 0 8px
+    font-weight: 600
+    color: #c0392b
+  textarea
+    width: 100%
+    padding: 8px
+    border: 1px solid $border
+    border-radius: $r-sm
+    font-size: .88rem
+    resize: vertical
+
+// Confirm-delete dialog — admin sees on course/test edit
+.confirm-delete
+  border: 1px solid $red
+  padding: 15px
+  margin-top: 10px
+  border-radius: $r-md
+  .confirm-delete__row
+    margin-top: 10px
+    display: flex
+    gap: 8px

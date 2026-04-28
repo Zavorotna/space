@@ -1,0 +1,12 @@
+@use 'vars' as *
+
+// ── Notification item ─────────────────────────────────────────────
+// .card is the base; .card--unread already defined in _base.sass
+// This file adds any notification-specific overrides
+
+.notification-item
+  border: 1px solid #ccc
+  padding: 10px
+  margin: 5px 0
+  &.unread
+    background: #e3f2fd

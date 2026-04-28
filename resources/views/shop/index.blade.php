@@ -14,11 +14,11 @@
 @if($products->isEmpty())
     <p>Наразі товарів немає.</p>
 @else
-    <div>
+    <div class="product-grid">
     @foreach($products as $product)
-        <div style="border:1px solid #ccc; padding:10px; margin:10px 0; display:inline-block; vertical-align:top; width:250px;">
+        <div class="product-card">
             @if($product->getFirstMediaUrl('photos'))
-                <img src="{{ $product->getFirstMediaUrl('photos') }}" alt="{{ $product->title }}" style="max-width:230px; max-height:200px;">
+                <img src="{{ $product->getFirstMediaUrl('photos') }}" alt="{{ $product->title }}">
             @endif
             <h3>{{ $product->title }}</h3>
             <p>{{ Str::limit($product->description, 80) }}</p>

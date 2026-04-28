@@ -24,29 +24,27 @@
     };
 @endphp
 
-{{-- Mode tabs --}}
-<div>
-    <a href="{{ route('schedule.index', ['mode' => 'day',   'date' => $date]) }}" @if($mode==='day')   style="font-weight:bold" @endif>День</a>
-    <a href="{{ route('schedule.index', ['mode' => 'week',  'date' => $date]) }}" @if($mode==='week')  style="font-weight:bold" @endif>Тиждень</a>
-    <a href="{{ route('schedule.index', ['mode' => 'month', 'date' => $date]) }}" @if($mode==='month') style="font-weight:bold" @endif>Місяць</a>
+<div class="sched-tabs">
+    <a href="{{ route('schedule.index', ['mode' => 'day',   'date' => $date]) }}" @class(['active' => $mode==='day'])>День</a>
+    <a href="{{ route('schedule.index', ['mode' => 'week',  'date' => $date]) }}" @class(['active' => $mode==='week'])>Тиждень</a>
+    <a href="{{ route('schedule.index', ['mode' => 'month', 'date' => $date]) }}" @class(['active' => $mode==='month'])>Місяць</a>
 </div>
 
-{{-- Navigation --}}
-<div style="display:flex; align-items:center; gap:12px; margin:10px 0;">
+<div class="sched-nav">
     <a href="{{ route('schedule.index', ['mode' => $mode, 'date' => $prevDate]) }}">&larr;</a>
     <strong>{{ $periodLabel }}</strong>
     <a href="{{ route('schedule.index', ['mode' => $mode, 'date' => $nextDate]) }}">&rarr;</a>
-    <a href="{{ route('schedule.index', ['mode' => $mode, 'date' => today()->toDateString()]) }}" style="font-size:0.85em;">Сьогодні</a>
+    <a href="{{ route('schedule.index', ['mode' => $mode, 'date' => today()->toDateString()]) }}" class="text-sm">Сьогодні</a>
 </div>
 
 {{-- DAY VIEW --}}
 @if($mode === 'day')
     @forelse($lessons as $lesson)
-    <div style="border:1px solid #ddd; padding:8px; margin:6px 0;">
+    <div class="sched-lesson">
         <strong>{{ $lesson->start_time }} — {{ $lesson->end_time }}</strong>
         {{ $lesson->course->title }}
         {{ $lesson->title ? "· {$lesson->title}" : '' }}
-        <span style="color:#888;">[{{ $lesson->mode === 'online' ? 'Онлайн' : 'Офлайн' }}]</span>
+        <span class="text-muted">[{{ $lesson->mode === 'online' ? 'Онлайн' : 'Офлайн' }}]</span>
         @if($lesson->location) · {{ $lesson->location->name }} @endif
         @if($lesson->classroom) ({{ $lesson->classroom->name }}) @endif
     </div>
@@ -60,22 +58,22 @@
     @php $weekStart = $current->copy()->startOfWeek(); @endphp
     @for($d = $weekStart->copy(); $d <= $weekStart->copy()->endOfWeek(); $d->addDay())
     @php $key = $d->format('Y-m-d'); $dayLessons = $grouped->get($key, collect()); @endphp
-    <div style="margin-bottom:10px;">
-        <div style="margin-bottom:4px;">
+    <div class="sched-week-day">
+        <div class="mb-1">
             <a href="{{ route('schedule.index', ['mode' => 'day', 'date' => $key]) }}"
-               style="font-weight:{{ $key === today()->toDateString() ? 'bold' : 'normal' }};">
+               @class(['active' => $key === today()->toDateString()])>
                 {{ $d->translatedFormat('D d.m') }}
             </a>
         </div>
         @forelse($dayLessons as $lesson)
-        <div style="padding:4px 0; border-bottom:1px solid #eee;">
+        <div class="sched-week-item">
             {{ $lesson->start_time }} — {{ $lesson->end_time }}
             · <strong>{{ $lesson->course->title }}</strong>
             {{ $lesson->title ? "· {$lesson->title}" : '' }}
             @if($lesson->mode === 'offline' && $lesson->location) · {{ $lesson->location->name }} @endif
         </div>
         @empty
-        <span style="color:#aaa; font-size:0.85em;">Немає занять</span>
+        <span class="text-subtle text-sm">Немає занять</span>
         @endforelse
     </div>
     @endfor
@@ -88,11 +86,11 @@
         $grouped    = $lessons->groupBy(fn($l) => $l->date->format('Y-m-d'));
         $cell       = $monthStart->copy()->startOfWeek();
     @endphp
-    <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+    <table class="data-table">
         <thead>
             <tr>
                 @foreach(['ПН','ВТ','СР','ЧТ','ПТ','СБ','НД'] as $day)
-                    <th style="padding:6px; border:1px solid #ddd; text-align:center;">{{ $day }}</th>
+                    <th style="text-align:center;">{{ $day }}</th>
                 @endforeach
             </tr>
         </thead>
@@ -106,19 +104,16 @@
                 $isCurrentMonth = $cell->month === $monthStart->month;
                 $isToday = $key === today()->toDateString();
             @endphp
-            <td style="padding:6px; border:1px solid #ddd; vertical-align:top; height:50px;
-                       {{ !$isCurrentMonth ? 'color:#ccc;' : '' }}">
+            <td style="vertical-align:top; height:50px; {{ !$isCurrentMonth ? 'color:#ccc;' : '' }}">
                 @if($count > 0)
                     <a href="{{ route('schedule.index', ['mode' => 'day', 'date' => $key]) }}"
-                       style="display:inline-flex; align-items:center; justify-content:center;
-                              width:26px; height:26px; border-radius:50%; background:#4a90d9;
-                              color:#fff; text-decoration:none; font-weight:bold; font-size:0.85em;"
+                       class="cal-mc-num cal-mc-num--link"
                        title="{{ $count }} {{ trans_choice('заняття|заняття|занять', $count) }}">
                         {{ $cell->day }}
                     </a>
-                    <span style="font-size:0.75em; color:#888;">×{{ $count }}</span>
+                    <span class="text-muted text-xs">×{{ $count }}</span>
                 @else
-                    <span style="{{ $isToday ? 'font-weight:bold;' : '' }}">{{ $cell->day }}</span>
+                    <span @class(['active' => $isToday])>{{ $cell->day }}</span>
                 @endif
             </td>
             @php $cell->addDay(); @endphp

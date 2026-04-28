@@ -35,7 +35,7 @@
             <td>
                 <a href="{{ route('profile.show', $student) }}">Профіль</a>
                 {{-- Issue certificate --}}
-                <form method="POST" action="{{ route('teacher.certificates.issue', [$course, $student->id]) }}" style="display:inline;" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('teacher.certificates.issue', [$course, $student->id]) }}" class="form-inline" enctype="multipart/form-data">
                     @csrf
                     <input type="file" name="certificate_image" accept="image/*">
                     <button type="submit">Видати сертифікат</button>

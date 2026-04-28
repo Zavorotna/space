@@ -12,7 +12,6 @@
     @endforeach
 </datalist>
 
-{{-- Add location --}}
 <h2>Нова локація</h2>
 <form method="POST" action="{{ route('admin.locations.store') }}">
     @csrf
@@ -35,9 +34,8 @@
 
 <hr>
 
-{{-- Existing locations --}}
 @forelse($locations as $location)
-<div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+<div class="card-panel">
 
     <form method="POST" action="{{ route('admin.locations.update', $location) }}">
         @csrf @method('PUT')
@@ -58,21 +56,21 @@
         <button type="submit">Зберегти</button>
     </form>
 
-    <form method="POST" action="{{ route('admin.locations.destroy', $location) }}" style="display:inline; margin-top:6px;">
+    <form method="POST" action="{{ route('admin.locations.destroy', $location) }}" class="form-inline mt-1">
         @csrf @method('DELETE')
         <button type="submit" onclick="return confirm('Видалити локацію «{{ $location->name }}»?')">Видалити локацію</button>
     </form>
 
     <h4>Аудиторії</h4>
     @foreach($location->classrooms as $room)
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
-        <form method="POST" action="{{ route('admin.classrooms.update', $room) }}" style="display:inline-flex; gap:6px;">
+    <div class="classroom-row">
+        <form method="POST" action="{{ route('admin.classrooms.update', $room) }}" class="form-inline flex-row">
             @csrf @method('PUT')
             <input type="text" name="name" value="{{ $room->name }}" required size="15">
             <input type="number" name="capacity" value="{{ $room->capacity }}" min="1" size="5">
             <button type="submit">Зберегти</button>
         </form>
-        <form method="POST" action="{{ route('admin.classrooms.destroy', $room) }}" style="display:inline;">
+        <form method="POST" action="{{ route('admin.classrooms.destroy', $room) }}" class="form-inline">
             @csrf @method('DELETE')
             <button type="submit" onclick="return confirm('Видалити аудиторію «{{ $room->name }}»?')">Видалити</button>
         </form>
@@ -83,7 +81,7 @@
         <p>Ще немає аудиторій.</p>
     @endif
 
-    <form method="POST" action="{{ route('admin.classrooms.store', $location) }}" style="margin-top:8px;">
+    <form method="POST" action="{{ route('admin.classrooms.store', $location) }}" class="mt-2">
         @csrf
         <input type="text" name="name" placeholder="Назва аудиторії" required>
         <input type="number" name="capacity" placeholder="Місткість" min="1">

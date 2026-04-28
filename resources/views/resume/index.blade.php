@@ -8,10 +8,10 @@
     <p>Наразі немає опублікованих резюме.</p>
 @else
     @foreach($resumes as $resume)
-    <div style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+    <div class="card-panel">
         <div>
             @if($resume->user->getFirstMediaUrl('avatar'))
-                <img src="{{ $resume->user->getFirstMediaUrl('avatar') }}" alt="Аватар" style="width:60px; height:60px; border-radius:50%;">
+                <img src="{{ $resume->user->getFirstMediaUrl('avatar') }}" alt="Аватар" class="avatar avatar-sm">
             @endif
             <h3>{{ $resume->user->last_name }} {{ $resume->user->first_name }}
                 @if($resume->user->isVip()) ⭐ @endif

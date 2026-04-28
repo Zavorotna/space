@@ -37,7 +37,7 @@
 <h2>Всі досягнення</h2>
 
 @foreach($allAchievements as $achievement)
-<div style="border:1px solid #ccc; padding:10px; margin:5px 0; {{ in_array($achievement->id, $earned) ? 'background:#e8f5e9;' : '' }}">
+<div class="card {{ in_array($achievement->id, $earned) ? 'card--earned' : '' }}">
     <h3>{{ $achievement->title }} {{ in_array($achievement->id, $earned) ? '✅' : '🔒' }}</h3>
     <p>{{ $achievement->description }}</p>
     <p>Нагорода: +{{ $achievement->reward_coins }} монет</p>

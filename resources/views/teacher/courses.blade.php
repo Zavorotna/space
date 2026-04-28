@@ -2,7 +2,7 @@
 @section('title', 'Курси')
 
 @section('content')
-<div style="display:flex; justify-content:space-between; align-items:center;">
+<div class="page-header">
     <h1>Курси</h1>
     <div>
         <a href="{{ route('teacher.courses.create') }}">+ Новий курс</a>
@@ -10,15 +10,14 @@
 </div>
 
 @if(session('success'))
-    <p style="color:green">{{ session('success') }}</p>
+    <p class="text-success mb-1">{{ session('success') }}</p>
 @endif
 
-{{-- ── Шаблони ─────────────────────────────────────────────── --}}
 <h2>Шаблони</h2>
 @if($templates->isEmpty())
     <p>Шаблонів ще немає. Створіть шаблон, щоб швидко запускати нові курси.</p>
 @else
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
                 <th>Назва</th>
@@ -39,13 +38,13 @@
                 @endif
                 <td>
                     <a href="{{ route('teacher.courses.edit', $course) }}">Редагувати</a>
-                    <form method="POST" action="{{ route('teacher.courses.duplicate', $course) }}" style="display:inline;"
+                    <form method="POST" action="{{ route('teacher.courses.duplicate', $course) }}" class="form-inline"
                           onsubmit="this.querySelector('button').disabled = true">
                         @csrf
                         <button type="submit">Копіювати як курс</button>
                     </form>
                     @if(auth()->user()->isSuperAdmin())
-                    <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" style="display:inline;">
+                    <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" class="form-inline">
                         @csrf @method('DELETE')
                         <button type="submit" onclick="return confirm('Видалити курс «{{ $course->title }}»?')">Видалити</button>
                     </form>
@@ -57,12 +56,11 @@
     </table>
 @endif
 
-{{-- ── Курси ────────────────────────────────────────────────── --}}
 <h2>Мої курси</h2>
 @if($courses->isEmpty())
     <p>Курсів ще немає.</p>
 @else
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
                 <th>Назва</th>
@@ -95,13 +93,13 @@
                 @endif
                 <td>
                     <a href="{{ route('teacher.courses.edit', $course) }}">Редагувати</a>
-                    <form method="POST" action="{{ route('teacher.courses.duplicate', $course) }}" style="display:inline;"
+                    <form method="POST" action="{{ route('teacher.courses.duplicate', $course) }}" class="form-inline"
                           onsubmit="this.querySelector('button').disabled = true">
                         @csrf
                         <button type="submit">Копіювати</button>
                     </form>
                     @if(auth()->user()->isSuperAdmin())
-                    <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" style="display:inline;">
+                    <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" class="form-inline">
                         @csrf @method('DELETE')
                         <button type="submit" onclick="return confirm('Видалити курс «{{ $course->title }}»?')">Видалити</button>
                     </form>

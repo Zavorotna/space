@@ -3,33 +3,27 @@
 @section('content')
 <h1>Реєстрація</h1>
 
-{{-- Google consent error --}}
 @if(session('google_error'))
-<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:6px;padding:10px 14px;margin-bottom:14px;color:#c0392b;">
+<div class="alert-box alert-box--error">
     {{ session('google_error') }}
 </div>
 @endif
 
-{{-- Session / CSRF errors --}}
 @if($errors->has('session'))
-<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px 14px;margin-bottom:14px;color:#856404;">
+<div class="alert-box alert-box--warn">
     {{ $errors->first('session') }}
 </div>
 @endif
 
-{{-- Google registration --}}
-<a href="{{ route('auth.google') }}" style="display:inline-block;padding:8px 16px;border:1px solid #ddd;border-radius:5px;text-decoration:none;color:#333;margin-bottom:16px;">
-    Зареєструватися через Google
-</a>
-<p style="color:#888;font-size:.85em;margin:0 0 16px;">
+<a href="{{ route('auth.google') }}" class="btn-google">Зареєструватися через Google</a>
+<p class="auth-hint">
     Натискаючи «Зареєструватися через Google», ви надаєте згоду на використання ваших персональних даних Google.
 </p>
 
-<hr style="margin:0 0 20px;">
+<hr>
 
-{{-- Manual registration form --}}
 @if($errors->any() && !$errors->has('session'))
-<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:6px;padding:10px 14px;margin-bottom:14px;color:#c0392b;">
+<div class="alert-box alert-box--error">
     @foreach($errors->all() as $error)
     <div>{{ $error }}</div>
     @endforeach

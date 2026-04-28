@@ -3,15 +3,14 @@
 @section('content')
 <h1>Вхід</h1>
 
-{{-- Session / CSRF errors --}}
 @if($errors->has('session'))
-<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px 14px;margin-bottom:14px;color:#856404;">
+<div class="alert-box alert-box--warn">
     {{ $errors->first('session') }}
 </div>
 @endif
 
 @if($errors->any() && !$errors->has('session'))
-<div style="background:#fdecea;border:1px solid #e74c3c;border-radius:6px;padding:10px 14px;margin-bottom:14px;color:#c0392b;">
+<div class="alert-box alert-box--error">
     @foreach($errors->all() as $error)
     <div>{{ $error }}</div>
     @endforeach
@@ -34,11 +33,9 @@
     <button type="submit">Увійти</button>
 </form>
 
-<hr style="margin:20px 0;">
+<hr>
 
-<a href="{{ route('auth.google') }}" style="display:inline-block;padding:8px 16px;border:1px solid #ddd;border-radius:5px;text-decoration:none;color:#333;">
-    Увійти через Google
-</a>
+<a href="{{ route('auth.google') }}" class="btn-google">Увійти через Google</a>
 
 <p>Немає акаунту? <a href="{{ route('register') }}">Зареєструватися</a></p>
 
@@ -54,15 +51,12 @@
             .catch(() => {});
     }
 
-    // Refresh every 4 minutes to stay ahead of 5-min cache TTL
     setInterval(refreshCsrf, 4 * 60 * 1000);
 
-    // Refresh immediately when page becomes visible (device wake / tab switch)
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible') refreshCsrf();
     });
 
-    // Refresh on window focus (browser switch)
     window.addEventListener('focus', refreshCsrf);
 })();
 </script>

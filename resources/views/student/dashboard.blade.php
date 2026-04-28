@@ -6,7 +6,7 @@
 @include('partials._admin_banners')
 
 @if($currentCourse)
-<div style="margin-bottom:20px;">
+<div class="mb-3">
     <h2>{{ $currentCourse->title }}</h2>
     <p>{{ $currentCourse->description }}</p>
     <p>Успішність: {{ $currentCourse->pivot->success_rate }}%</p>
@@ -34,7 +34,7 @@
 @foreach($receivedNotes as $note)
 <div>
     <strong>{{ $note->author->full_name }}:</strong> {{ $note->content }}
-    <form method="POST" action="{{ route('notes.read', $note) }}" style="display:inline">
+    <form method="POST" action="{{ route('notes.read', $note) }}" class="form-inline">
         @csrf
         <button type="submit">Прочитано</button>
     </form>
@@ -59,9 +59,9 @@
 
 <h3>Транзакції</h3>
 @if($transactions->isEmpty())
-<p style="color:#aaa;">Немає транзакцій.</p>
+<p class="text-subtle">Немає транзакцій.</p>
 @else
-<table>
+<table class="data-table">
     <thead><tr><th>Дата</th><th>Опис</th><th>Сума</th></tr></thead>
     <tbody>
     @foreach($transactions as $tx)

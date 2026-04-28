@@ -4,13 +4,13 @@
 @section('content')
 <div>
     @if($user->getFirstMediaUrl('avatar'))
-        <img src="{{ $user->getFirstMediaUrl('avatar') }}" alt="Аватар" style="width:100px; height:100px; border-radius:50%;">
+        <img src="{{ $user->getFirstMediaUrl('avatar') }}" alt="Аватар" class="avatar avatar-lg">
     @endif
 
     <h1>{{ $user->last_name }} {{ $user->first_name }}
         @if($user->isVip()) ⭐ VIP @endif
     </h1>
-    <p style="color:#888;">
+    <p class="text-muted">
         @switch($user->role)
             @case('admin') Адміністратор @break
             @case('superadmin') Суперадмін @break
@@ -37,20 +37,16 @@
     </ul>
 @endif
 
-{{-- Send notification (admin / teacher only, not to yourself) --}}
 @if(auth()->check() && auth()->id() !== $user->id && (auth()->user()->isAdmin() || auth()->user()->isTeacher()))
-<div style="border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin-top:20px;">
-    <h2 style="margin:0 0 10px;font-size:1rem;">Надіслати повідомлення</h2>
+<div class="notify-form">
+    <h2>Надіслати повідомлення</h2>
     @if(session('notify_success'))
-    <p style="color:#27ae60;margin-bottom:8px;">{{ session('notify_success') }}</p>
+    <p class="text-success mb-1">{{ session('notify_success') }}</p>
     @endif
     <form method="POST" action="{{ route('notifications.sendToUser', $user) }}">
         @csrf
-        <textarea name="message" rows="3" required placeholder="Текст повідомлення..."
-                  style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:.9rem;resize:vertical;"></textarea>
-        <button type="submit" style="margin-top:8px;padding:7px 16px;background:#f5a623;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:.88rem;">
-            Надіслати
-        </button>
+        <textarea name="message" rows="3" required placeholder="Текст повідомлення..."></textarea>
+        <button type="submit" class="btn-submit">Надіслати</button>
     </form>
 </div>
 @endif

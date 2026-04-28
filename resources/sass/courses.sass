@@ -1,0 +1,46 @@
+@use 'vars' as *
+
+// ── Course cover image ────────────────────────────────────────────
+.course-cover
+  max-width: 200px
+  display: block
+  margin-bottom: 6px
+
+// ── Schedule form section (create/edit course) ────────────────────
+.schedule-day-label
+  margin-right: 10px
+
+.schedule-time-row
+  display: flex
+  gap: 16px
+  margin-top: 8px
+  flex-wrap: wrap
+
+.schedule-loc-block
+  margin-top: 8px
+
+// ── Students table wrapper ────────────────────────────────────────
+.students-table-wrap
+  overflow-y: auto
+  border: 1px solid $border
+  margin: 10px 0
+  &--scrollable
+    max-height: 400px
+
+// ── Teacher profile — course card ─────────────────────────────────
+.teacher-course-card
+  border: 1px solid #ccc
+  padding: 10px
+  margin: 5px 0
+
+// ── Homework/project submission images ────────────────────────────
+.thumb-wrap
+  display: inline-block
+  margin: 5px
+
+.thumb
+  max-width: 150px
+  max-height: 150px
+
+.thumb-lg
+  max-width: 200px

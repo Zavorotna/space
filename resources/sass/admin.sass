@@ -1,0 +1,162 @@
+@use 'vars' as *
+
+// ── Admin banners ─────────────────────────────────────────────────
+// Used on admin / teacher / student dashboards
+
+.admin-banners
+  margin-bottom: 16px
+
+.admin-banner
+  border-radius: $r-md
+  padding: 12px 14px
+  margin-bottom: 8px
+  &--message
+    background: #fff8e1
+    border: 1px solid $accent
+    border-left: 4px solid $accent
+  &--deletion
+    background: #fdecea
+    border: 1px solid $red
+    border-left: 4px solid $red
+
+.admin-banner__body
+  display: flex
+  align-items: flex-start
+  gap: 12px
+
+.admin-banner__content
+  flex: 1
+  min-width: 0
+
+.admin-banner__title
+  font-size: .9rem
+  &--deletion
+    color: #c0392b
+
+.admin-banner__text
+  margin: 4px 0 0
+  font-size: .88rem
+  color: #555
+  white-space: pre-wrap
+
+.admin-banner__meta
+  margin: 4px 0 0
+  font-size: .78rem
+  color: $muted
+
+.admin-banner__ts
+  font-size: .75rem
+  color: $subtle
+
+.admin-banner__actions
+  display: flex
+  gap: 8px
+  margin-top: 8px
+  flex-wrap: wrap
+
+.admin-banner__dismiss
+  background: none
+  border: none
+  cursor: pointer
+  color: $subtle
+  font-size: 1.1rem
+  padding: 0 2px
+  line-height: 1
+  flex-shrink: 0
+
+// ── Lesson report section ─────────────────────────────────────────
+// Shared: admin + teacher dashboards
+
+.report-section
+  border: 2px solid $orange
+  padding: 15px
+  margin-bottom: 20px
+  border-radius: $r-lg
+  h2
+    color: $orange
+    margin-top: 0
+
+.report-item
+  border: 1px solid $border
+  padding: 10px
+  margin: 8px 0
+  border-radius: $r-sm
+
+.makeup-panel
+  margin-top: 8px
+  padding: 8px
+  background: #fff8e1
+  border-radius: $r-sm
+
+.makeup-date-row
+  margin-top: 6px
+  display: flex
+  gap: 4px
+  flex-wrap: wrap
+
+// ── Withdrawal section ────────────────────────────────────────────
+
+.withdrawal-section
+  border: 2px solid $orange
+  padding: 14px
+  margin-bottom: 20px
+  border-radius: $r-lg
+  h2
+    color: $orange
+    margin: 0 0 10px
+
+.withdrawal-item
+  border: 1px solid $border-light
+  padding: 10px
+  margin: 6px 0
+  border-radius: 5px
+  display: flex
+  gap: 10px
+  flex-wrap: wrap
+  align-items: flex-start
+
+// ── Unreported lessons warning ────────────────────────────────────
+
+.unreported-section
+  border: 2px solid $red
+  padding: 12px
+  margin-bottom: 20px
+  border-radius: $r-md
+  strong
+    color: $red
+  ul
+    margin: 8px 0 0
+
+// ── Users page ────────────────────────────────────────────────────
+
+.msg-form
+  margin-top: 6px
+
+.msg-textarea
+  width: 220px
+  padding: 5px
+  border: 1px solid $border
+  border-radius: $r-sm
+  font-size: .82rem
+  resize: vertical
+  display: block
+
+// ── Locations page ────────────────────────────────────────────────
+
+.classroom-row
+  display: flex
+  gap: 8px
+  align-items: center
+  margin-bottom: 4px
+
+// ── Input width helpers ───────────────────────────────────────────
+// Used in lesson report forms
+
+.input-sm
+  width: 70px
+
+.input-md
+  width: 200px
+
+.input-w-180
+  width: 180px

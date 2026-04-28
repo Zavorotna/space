@@ -1,0 +1,34 @@
+@use 'vars' as *
+
+// ── Inline alert boxes (inside main, no auto-centering) ───────────
+.alert-box
+  padding: 10px 14px
+  border-radius: $r-md
+  margin-bottom: 14px
+  &--error
+    background: #fdecea
+    border: 1px solid $red
+    color: #c0392b
+  &--warn
+    background: #fff3cd
+    border: 1px solid #ffc107
+    color: #856404
+
+// ── Auth hint text ────────────────────────────────────────────────
+.auth-hint
+  color: $muted
+  font-size: .85em
+  margin: 0 0 16px
+
+// ── Google / OAuth button ─────────────────────────────────────────
+.btn-google
+  display: inline-block
+  padding: 8px 16px
+  border: 1px solid $border
+  border-radius: 5px
+  text-decoration: none
+  color: #333
+  margin-bottom: 16px
+  &:hover
+    background: $light-bg
+    text-decoration: none

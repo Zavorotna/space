@@ -41,12 +41,12 @@
             </td>
             <td>
                 @if($req->status === 'pending')
-                    <form method="POST" action="{{ route('superadmin.withdrawals.approve', $req) }}" style="display:inline;">
+                    <form method="POST" action="{{ route('superadmin.withdrawals.approve', $req) }}" class="form-inline">
                         @csrf
                         <input type="text" name="pickup_note" placeholder="Куди підійти для отримання" required>
                         <button type="submit">Підтвердити</button>
                     </form>
-                    <form method="POST" action="{{ route('superadmin.withdrawals.reject', $req) }}" style="display:inline;"
+                    <form method="POST" action="{{ route('superadmin.withdrawals.reject', $req) }}" class="form-inline"
                           onsubmit="return confirm('Відхилити? Монети повернуться користувачу.')">
                         @csrf
                         <button type="submit">Відхилити</button>

@@ -55,7 +55,7 @@
     @if($material->price_coins > 0)
         <span>{{ $material->price_coins }} монет</span>
         @if(!$material->purchases()->where('user_id', auth()->id())->exists())
-            <form method="POST" action="{{ route('materials.purchase', $material) }}" style="display:inline">
+            <form method="POST" action="{{ route('materials.purchase', $material) }}" class="form-inline">
                 @csrf
                 <button type="submit">Придбати</button>
             </form>

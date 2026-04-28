@@ -12,7 +12,7 @@
 
 <div>
     <a href="{{ route('bonuses.index') }}">Мої бонуси</a>
-    <form method="POST" action="{{ route('wallet.vip') }}" style="display:inline">
+    <form method="POST" action="{{ route('wallet.vip') }}" class="form-inline">
         @csrf
         <button type="submit" onclick="return confirm('VIP статус на 3 місяці за 500 монет?')">
             @if(auth()->user()->isVip()) ⭐ VIP (до {{ auth()->user()->vip_expires_at->format('d.m.Y') }})

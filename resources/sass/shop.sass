@@ -1,0 +1,21 @@
+@use 'vars' as *
+
+// ── Product grid ──────────────────────────────────────────────────
+.product-grid
+  display: flex
+  flex-wrap: wrap
+  gap: 16px
+  margin-top: 12px
+
+// ── Product card ──────────────────────────────────────────────────
+.product-card
+  border: 1px solid #ccc
+  padding: 10px
+  border-radius: $r-sm
+  width: 250px
+  vertical-align: top
+  img
+    max-width: 230px
+    max-height: 200px
+    display: block
+    margin-bottom: 8px
