@@ -220,7 +220,8 @@ class CourseController extends Controller
             $course->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
 
-        // Auto-generate lessons for the primary teacher
+        $this->syncTopics($course, $request->input('topics', []));
+
         $generated = app(\App\Services\ScheduleService::class)
             ->generateCourseLessons($course, \App\Models\User::find($course->teacher_id));
 
@@ -236,7 +237,7 @@ class CourseController extends Controller
     public function edit(Course $course)
     {
         $this->authorizeCourse($course);
-        $course->load(['homeworkAssignments', 'tests.questions.options', 'graduationProject', 'additionalMaterials', 'coTeachers',
+        $course->load(['topics', 'homeworkAssignments', 'tests.questions', 'graduationProject', 'additionalMaterials', 'coTeachers',
             'students' => fn($q) => $q->withPivot(['status', 'is_paid', 'enrolled_at', 'active_until'])]);
         $teachers  = \App\Models\User::whereIn('role', ['teacher', 'admin', 'superadmin'])->orderBy('last_name')->get();
         $locations = \App\Models\Location::where('is_active', true)->with('classrooms')->get();
@@ -351,7 +352,31 @@ class CourseController extends Controller
             $course->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
 
+        $this->syncTopics($course, $request->input('topics', []));
+
         return redirect()->route('teacher.courses.edit', $course)->with('success', 'Курс оновлено.' . $generatedMsg);
+    }
+
+    public function updateTeacher(Request $request, Course $course)
+    {
+        $this->authorizeCourse($course);
+        if (!$request->user()->isAdmin()) abort(403);
+
+        $validated = $request->validate(['teacher_id' => 'required|exists:users,id']);
+        $oldId = $course->teacher_id;
+        $course->update(['teacher_id' => $validated['teacher_id']]);
+
+        if ($validated['teacher_id'] != $oldId) {
+            $teacher = \App\Models\User::find($validated['teacher_id']);
+            if ($teacher) {
+                app(\App\Services\NotificationService::class)->notify(
+                    $teacher, 'course_assigned', 'Вас призначено викладачем курсу',
+                    "Курс: {$course->title}", route('teacher.courses.edit', $course)
+                );
+            }
+        }
+
+        return back()->with('success', 'Викладача змінено.');
     }
 
     public function destroy(Course $course)
@@ -422,21 +447,39 @@ class CourseController extends Controller
     {
         $this->authorizeCourse($course);
 
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+        $request->validate([
+            'user_id' => 'nullable|integer|min:1',
+            'phone'   => 'nullable|string|max:20',
         ]);
 
-        if ($course->students()->where('user_id', $validated['user_id'])->exists()) {
+        $userId = $request->input('user_id');
+
+        if (!$userId && $request->filled('phone')) {
+            $phone = $request->input('phone');
+            $student = User::where('phone', $phone)
+                ->orWhere('phone', preg_replace('/\D/', '', $phone))
+                ->first();
+            if (!$student) {
+                return back()->with('error', 'Студента з таким номером телефону не знайдено.');
+            }
+            $userId = $student->id;
+        }
+
+        if (!$userId) {
+            return back()->with('error', 'Вкажіть ID або номер телефону студента.');
+        }
+
+        if ($course->students()->where('user_id', $userId)->exists()) {
             return back()->with('error', 'Студент вже на курсі.');
         }
 
-        $course->students()->attach($validated['user_id'], [
+        $course->students()->attach($userId, [
             'status' => 'active',
             'enrolled_at' => now(),
             'active_until' => now()->addYear(),
         ]);
 
-        $student = User::find($validated['user_id']);
+        $student = User::find($userId);
         if ($student && $student->role === 'registered') {
             $student->update(['role' => 'student']);
         }
@@ -545,6 +588,26 @@ class CourseController extends Controller
         );
 
         return view('student.course-pay', compact('course', 'paymentData', 'discount', 'finalPrice'));
+    }
+
+    private function syncTopics(Course $course, array $submitted): void
+    {
+        $keepIds = collect();
+        foreach ($submitted as $idx => $data) {
+            if (empty(trim($data['title'] ?? ''))) continue;
+            $id = !empty($data['id']) ? (int) $data['id'] : null;
+            if ($id) {
+                $topic = $course->topics()->find($id);
+                if ($topic) {
+                    $topic->update(['title' => trim($data['title']), 'sort_order' => $idx + 1]);
+                    $keepIds->push($id);
+                    continue;
+                }
+            }
+            $new = $course->topics()->create(['title' => trim($data['title']), 'sort_order' => $idx + 1]);
+            $keepIds->push($new->id);
+        }
+        $course->topics()->whereNotIn('id', $keepIds)->delete();
     }
 
     private function scheduleChanged(Course $course, array $validated): bool

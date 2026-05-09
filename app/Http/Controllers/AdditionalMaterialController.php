@@ -14,11 +14,12 @@ class AdditionalMaterialController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'url' => 'nullable|url',
-            'price_coins' => 'required|integer|min:0',
+            'price_coins' => 'nullable|integer|min:0',
         ]);
 
-        $validated['course_id'] = $course->id;
-        $validated['teacher_id'] = $request->user()->id;
+        $validated['course_id']   = $course->id;
+        $validated['teacher_id']  = $request->user()->id;
+        $validated['price_coins'] = $validated['price_coins'] ?? 0;
 
         AdditionalMaterial::create($validated);
         return back()->with('success', 'Матеріал додано.');

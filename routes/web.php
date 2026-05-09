@@ -184,6 +184,7 @@ Route::post('/courses', [CourseController::class, 'store'])->name('courses.store
         Route::post('/applications/{application}/approve', [CourseController::class, 'approveApplication'])->name('applications.approve');
         Route::post('/courses/{course}/add-student', [CourseController::class, 'addStudent'])->name('courses.addStudent');
         Route::get('/courses/{course}/students', [CourseController::class, 'students'])->name('courses.students');
+        Route::put('/courses/{course}/teacher', [CourseController::class, 'updateTeacher'])->name('courses.teacher');
         Route::put('/courses/{course}/end-date', [CourseController::class, 'updateEndDate'])->name('courses.endDate');
         Route::post('/courses/{course}/co-teachers', [CourseController::class, 'addCoTeacher'])->name('courses.coTeachers.add');
         Route::delete('/courses/{course}/co-teachers/{user}', [CourseController::class, 'removeCoTeacher'])->name('courses.coTeachers.remove');

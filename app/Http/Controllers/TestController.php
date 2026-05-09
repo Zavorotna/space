@@ -84,9 +84,10 @@ class TestController extends Controller
         $this->authorizeTest($test);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'passing_score' => 'required|integer|min:1|max:100',
+            'title'               => 'required|string|max:255',
+            'description'         => 'nullable|string',
+            'passing_score'       => 'required|integer|min:1|max:100',
+            'activation_topic_id' => 'nullable|exists:course_topics,id',
         ]);
         $test->update($validated);
         return back()->with('success', 'Тест оновлено.');

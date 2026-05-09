@@ -52,6 +52,11 @@ class Course extends Model implements HasMedia
         $this->addMediaCollection('gallery');
     }
 
+    public function topics()
+    {
+        return $this->hasMany(CourseTopic::class)->orderBy('sort_order');
+    }
+
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacher_id');

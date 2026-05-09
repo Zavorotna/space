@@ -8,7 +8,7 @@ class Lesson extends Model
 {
     protected $fillable = [
         'course_id', 'teacher_id', 'title', 'mode', 'location_id', 'classroom_id',
-        'date', 'start_time', 'end_time', 'attendance_confirmed', 'notification_sent',
+        'date', 'start_time', 'end_time', 'topic_ids', 'attendance_confirmed', 'notification_sent',
         'completion_status', 'actual_minutes', 'completion_note', 'completion_noted_at', 'makeup_for_lesson_id',
     ];
 
@@ -16,6 +16,7 @@ class Lesson extends Model
     {
         return [
             'date' => 'date',
+            'topic_ids' => 'array',
             'attendance_confirmed' => 'boolean',
             'notification_sent' => 'boolean',
             'completion_noted_at' => 'datetime',
