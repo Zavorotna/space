@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\{User, Wallet};
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,20 @@ use Illuminate\Validation\Rules;
 
 class RegisterController extends Controller
 {
+    private function notifyAdmins(User $newUser): void
+    {
+        $notif = app(NotificationService::class);
+        User::whereIn('role', ['admin', 'superadmin'])->each(function ($admin) use ($newUser, $notif) {
+            $notif->notify(
+                $admin,
+                'new_registration',
+                'Новий учасник зареєструвався',
+                "{$newUser->full_name} · {$newUser->phone}",
+                route('profile.show', $newUser)
+            );
+        });
+    }
+
     public function showForm()
     {
         return response(view('auth.register'))
@@ -39,6 +54,9 @@ class RegisterController extends Controller
 
         // Create wallet
         Wallet::create(['user_id' => $user->id, 'balance' => 0]);
+
+        // Notify admins/superadmins about new registration
+        $this->notifyAdmins($user);
 
         Auth::login($user);
 

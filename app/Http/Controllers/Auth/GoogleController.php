@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\{User, Wallet};
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -13,6 +14,20 @@ class GoogleController extends Controller
     public function redirect()
     {
         return Socialite::driver('google')->redirect();
+    }
+
+    private function notifyAdmins(User $newUser): void
+    {
+        $notif = app(NotificationService::class);
+        User::whereIn('role', ['admin', 'superadmin'])->each(function ($admin) use ($newUser, $notif) {
+            $notif->notify(
+                $admin,
+                'new_registration',
+                'Новий учасник зареєструвався',
+                "{$newUser->full_name}" . ($newUser->phone ? " · {$newUser->phone}" : " · Google"),
+                route('profile.show', $newUser)
+            );
+        });
     }
 
     // Link Google to an already logged-in account
@@ -89,6 +104,7 @@ class GoogleController extends Controller
                 'role'       => 'registered',
             ]);
             Wallet::create(['user_id' => $user->id, 'balance' => 0]);
+            $this->notifyAdmins($user);
         } elseif (!$user->google_id) {
             $user->update(['google_id' => $googleUser->getId()]);
         }

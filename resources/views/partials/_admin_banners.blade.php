@@ -4,7 +4,22 @@
     <div id="banner-{{ $banner->id }}"
          class="admin-banner admin-banner--{{ $banner->type === 'deletion_request' ? 'deletion' : 'message' }}">
 
-        @if($banner->type === 'deletion_request' && $banner->deletionRequest)
+        @if($banner->type === 'new_registration')
+        <div class="admin-banner__body">
+            <div class="admin-banner__content">
+                <strong class="admin-banner__title">👤 {{ $banner->title }}</strong>
+                <p class="admin-banner__text">{{ $banner->message }}</p>
+                @if($banner->link)
+                <a href="{{ $banner->link }}" class="text-sm">Переглянути профіль →</a>
+                @endif
+                <span class="admin-banner__ts">{{ $banner->created_at->translatedFormat('d F Y, H:i') }}</span>
+            </div>
+            <button onclick="dismissBanner({{ $banner->id }})"
+                    title="Закрити"
+                    class="admin-banner__dismiss">✕</button>
+        </div>
+
+        @elseif($banner->type === 'deletion_request' && $banner->deletionRequest)
         @php $dr = $banner->deletionRequest; $deletable = $dr->deletable; @endphp
         <div class="admin-banner__body">
             <div class="admin-banner__content">

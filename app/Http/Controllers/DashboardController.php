@@ -75,7 +75,7 @@ class DashboardController extends Controller
         $schedBirthdays = $this->birthdaysInRange($allUsers, $start, $end);
 
         $adminBanners = $user->notifications()->unread()
-            ->whereIn('type', ['admin_message', 'deletion_request'])
+            ->whereIn('type', ['admin_message', 'deletion_request', 'new_registration'])
             ->with('deletionRequest.deletable', 'deletionRequest.requester')
             ->latest()->get();
 
