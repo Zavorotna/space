@@ -68,7 +68,7 @@ class DashboardController extends Controller
             ->get();
 
         $schedLocations = Location::where('is_active', true)->with('classrooms')->get();
-        $schedCourses   = Course::where('status', 'active')->where('is_template', false)->get();
+        $schedCourses   = Course::whereNotIn('status', ['completed'])->where('is_template', false)->get();
 
         // Admin sees all users' birthdays
         $allUsers = User::whereNotNull('birthday')->get(['id', 'first_name', 'last_name', 'birthday', 'role']);
@@ -120,7 +120,7 @@ class DashboardController extends Controller
         $schedCourses = Course::where(function ($q) use ($user) {
             $q->where('teacher_id', $user->id)
               ->orWhereHas('coTeachers', fn($q2) => $q2->where('users.id', $user->id));
-        })->where('status', 'active')->where('is_template', false)->get();
+        })->whereNotIn('status', ['completed'])->where('is_template', false)->get();
 
         $courses = $user->taughtCourses()->with('activeStudents')->where('status', 'active')->get();
 

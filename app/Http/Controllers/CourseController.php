@@ -158,7 +158,7 @@ class CourseController extends Controller
                 ->pending()
                 ->pluck('deletable_id');
 
-            $coTeachingIds = $user->coTeacherCourses()->pluck('courses.id');
+            $coTeachingIds = $user->coTeacherCourses()->get()->pluck('id');
             $courses = Course::where('is_template', false)
                 ->where(fn($q) => $q->where('teacher_id', $user->id)->orWhereIn('id', $coTeachingIds))
                 ->whereNotIn('id', $pendingIds)
@@ -200,13 +200,14 @@ class CourseController extends Controller
             'has_graduation_project' => 'boolean',
             'is_template'            => 'boolean',
             'cover'                  => 'nullable|image|max:5120',
-            'schedule_days'          => 'nullable|array',
-            'schedule_days.*'        => 'integer|between:1,7',
-            'schedule_start_time'    => 'nullable|date_format:H:i',
-            'schedule_end_time'      => 'nullable|date_format:H:i|after:schedule_start_time',
-            'schedule_mode'          => 'nullable|in:online,offline',
-            'schedule_location_id'   => 'nullable|exists:locations,id',
-            'schedule_classroom_id'  => 'nullable|exists:classrooms,id',
+            'schedule_days'            => 'nullable|array',
+            'schedule_days.*'          => 'integer|between:1,7',
+            'schedule_times'           => 'nullable|array',
+            'schedule_times.*.start'   => 'nullable|date_format:H:i',
+            'schedule_times.*.end'     => 'nullable|date_format:H:i',
+            'schedule_mode'            => 'nullable|in:online,offline',
+            'schedule_location_id'     => 'nullable|exists:locations,id',
+            'schedule_classroom_id'    => 'nullable|exists:classrooms,id',
         ]);
 
         $validated['teacher_id'] = $request->user()->isTeacher()
@@ -264,13 +265,14 @@ class CourseController extends Controller
             'has_graduation_project' => 'boolean',
             'is_published'           => 'boolean',
             'cover'                  => 'nullable|image|max:5120',
-            'schedule_days'          => 'nullable|array',
-            'schedule_days.*'        => 'integer|between:1,7',
-            'schedule_start_time'    => 'nullable|date_format:H:i',
-            'schedule_end_time'      => 'nullable|date_format:H:i',
-            'schedule_mode'          => 'nullable|in:online,offline',
-            'schedule_location_id'   => 'nullable|exists:locations,id',
-            'schedule_classroom_id'  => 'nullable|exists:classrooms,id',
+            'schedule_days'            => 'nullable|array',
+            'schedule_days.*'          => 'integer|between:1,7',
+            'schedule_times'           => 'nullable|array',
+            'schedule_times.*.start'   => 'nullable|date_format:H:i',
+            'schedule_times.*.end'     => 'nullable|date_format:H:i',
+            'schedule_mode'            => 'nullable|in:online,offline',
+            'schedule_location_id'     => 'nullable|exists:locations,id',
+            'schedule_classroom_id'    => 'nullable|exists:classrooms,id',
         ];
 
         if ($request->user()->isAdmin()) {
@@ -279,9 +281,12 @@ class CourseController extends Controller
 
         $validated = $request->validate($rules);
 
-        // Ensure schedule_days is explicitly set (absent when no checkboxes checked)
+        // Ensure schedule_days/times are explicitly null when absent (no checkboxes checked)
         if (!array_key_exists('schedule_days', $validated)) {
             $validated['schedule_days'] = null;
+        }
+        if (!array_key_exists('schedule_times', $validated)) {
+            $validated['schedule_times'] = null;
         }
         // Guard: schedule_mode must never be null (NOT NULL column)
         if (empty($validated['schedule_mode'])) {
@@ -318,22 +323,23 @@ class CourseController extends Controller
         }
 
         if ($scheduleChanged && $course->hasSchedule()) {
-            // Delete all unstarted lessons and regenerate for all teachers
+            // Delete only FUTURE unstarted lessons (keep history) and regenerate from today
+            $fromDate = today()->toDateString();
             \App\Models\Lesson::where('course_id', $course->id)
                 ->whereNull('completion_status')
+                ->where('date', '>=', $fromDate)
                 ->delete();
             $total = 0;
             if ($course->teacher_id) {
-                $total += $scheduleService->generateCourseLessons($course, \App\Models\User::find($course->teacher_id));
+                $total += $scheduleService->generateCourseLessons($course, \App\Models\User::find($course->teacher_id), $fromDate);
             }
             foreach ($course->coTeachers as $coTeacher) {
-                $total += $scheduleService->generateCourseLessons($course, $coTeacher);
+                $total += $scheduleService->generateCourseLessons($course, $coTeacher, $fromDate);
             }
             $generatedMsg = $total > 0
                 ? " Розклад змінено, перегенеровано {$total} занять."
-                : " Розклад змінено, незаплановані заняття видалено.";
+                : " Розклад змінено, майбутні незаплановані заняття видалено.";
         } elseif (!$course->is_template && $newTeacherId && $newTeacherId != $oldTeacherId) {
-            // Only teacher changed — generate lessons for new teacher
             $teacher = \App\Models\User::find($newTeacherId);
             if ($teacher) {
                 $n = $scheduleService->generateCourseLessons($course, $teacher);
@@ -543,22 +549,31 @@ class CourseController extends Controller
 
     private function scheduleChanged(Course $course, array $validated): bool
     {
-        foreach (['schedule_start_time', 'schedule_end_time'] as $field) {
-            if (!array_key_exists($field, $validated)) continue;
-            $old = $course->getRawOriginal($field) ? substr($course->getRawOriginal($field), 0, 5) : null;
-            $new = $validated[$field] ? substr((string) $validated[$field], 0, 5) : null;
-            if ($old !== $new) return true;
+        // Per-day times
+        if (array_key_exists('schedule_times', $validated)) {
+            $norm = function ($times) {
+                $r = [];
+                foreach ((array) $times as $day => $t) {
+                    $r[(string) $day] = ['start' => $t['start'] ?? '', 'end' => $t['end'] ?? ''];
+                }
+                ksort($r);
+                return $r;
+            };
+            if ($norm($course->schedule_times ?? []) !== $norm($validated['schedule_times'] ?? [])) return true;
         }
+        // Mode / location / classroom
         foreach (['schedule_mode', 'schedule_location_id', 'schedule_classroom_id'] as $field) {
             if (!array_key_exists($field, $validated)) continue;
             if ((string) ($course->getRawOriginal($field) ?? '') !== (string) ($validated[$field] ?? '')) return true;
         }
+        // Days
         if (array_key_exists('schedule_days', $validated)) {
             $old = array_map('intval', (array) ($course->schedule_days ?? []));
             $new = array_map('intval', (array) ($validated['schedule_days'] ?? []));
             sort($old); sort($new);
             if ($old !== $new) return true;
         }
+        // Dates
         foreach (['start_date', 'end_date'] as $field) {
             if (!array_key_exists($field, $validated)) continue;
             $old = $course->getRawOriginal($field);

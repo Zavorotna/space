@@ -56,43 +56,27 @@
 
     <hr>
     <h3>Розклад занять</h3>
-    <p class="text-sm text-muted">Змінення розкладу тут не перегенеровує вже існуючі заняття. Щоб додати нові — натисніть «Згенерувати заняття» після збереження.</p>
-    <div>
-        <label>Дні тижня</label><br>
-        @foreach([1=>'Пн',2=>'Вт',3=>'Ср',4=>'Чт',5=>'Пт',6=>'Сб',7=>'Нд'] as $num => $label)
-        <label class="schedule-day-label">
-            <input type="checkbox" name="schedule_days[]" value="{{ $num }}"
-                   @checked(is_array($course->schedule_days) && in_array($num, $course->schedule_days))>
-            {{ $label }}
-        </label>
-        @endforeach
+    <p class="text-xs text-muted">Зміна розкладу видалить майбутні незаплановані заняття і перегенерує від сьогодні.</p>
+    <div class="form-group">
+        <label>Формат занять</label><br>
+        <select name="schedule_mode" id="ed-mode" onchange="edToggleLoc(this.value)">
+            <option value="online" @selected(($course->schedule_mode ?? 'online')==='online')>Онлайн</option>
+            <option value="offline" @selected($course->schedule_mode==='offline')>Офлайн</option>
+        </select>
     </div>
-    <div class="schedule-time-row">
-        <div><label>Початок заняття</label><br>
-            <input type="time" name="schedule_start_time" value="{{ $course->schedule_start_time ? substr($course->schedule_start_time,0,5) : '' }}"></div>
-        <div><label>Кінець заняття</label><br>
-            <input type="time" name="schedule_end_time" value="{{ $course->schedule_end_time ? substr($course->schedule_end_time,0,5) : '' }}"></div>
-        <div>
-            <label>Формат</label><br>
-            <select name="schedule_mode" id="sched-mode-edit" onchange="toggleSchedLocation('edit',this.value)">
-                <option value="online" @selected(($course->schedule_mode ?? 'online')==='online')>Онлайн</option>
-                <option value="offline" @selected($course->schedule_mode==='offline')>Офлайн</option>
-            </select>
-        </div>
-    </div>
-    <div id="sched-loc-edit" class="schedule-loc-block" style="display:{{ $course->schedule_mode==='offline'?'block':'none' }};">
+    <div id="ed-loc" class="schedule-loc-block" style="display:{{ $course->schedule_mode==='offline'?'flex':'none' }};">
         <div>
             <label>Локація</label><br>
-            <select name="schedule_location_id" id="sched-loc-sel-edit" onchange="filterClassrooms('edit',this.value)">
+            <select name="schedule_location_id" id="ed-loc-sel" onchange="edFilterRooms(this.value)">
                 <option value="">— Оберіть —</option>
                 @foreach($locations as $loc)
                 <option value="{{ $loc->id }}" @selected($course->schedule_location_id == $loc->id)>{{ $loc->name }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="mt-1">
+        <div>
             <label>Аудиторія</label><br>
-            <select name="schedule_classroom_id" id="sched-room-sel-edit">
+            <select name="schedule_classroom_id" id="ed-room-sel">
                 <option value="">— Оберіть —</option>
                 @foreach($locations as $loc)
                     @foreach($loc->classrooms as $room)
@@ -105,21 +89,59 @@
             </select>
         </div>
     </div>
+    <div class="form-group mt-1">
+        <label>Дні та час занять</label>
+        @php $scheduleTimes = $course->schedule_times ?? []; @endphp
+        @foreach([1=>'Пн',2=>'Вт',3=>'Ср',4=>'Чт',5=>'Пт',6=>'Сб',7=>'Нд'] as $num => $dayLabel)
+        @php
+            $isChecked = is_array($course->schedule_days) && in_array($num, $course->schedule_days);
+            $dayTime   = $scheduleTimes[$num] ?? $scheduleTimes[(string)$num] ?? null;
+            $defStart  = $course->schedule_start_time ? substr($course->schedule_start_time,0,5) : '';
+            $defEnd    = $course->schedule_end_time   ? substr($course->schedule_end_time,0,5)   : '';
+        @endphp
+        <div class="sched-day-row">
+            <label class="sched-day-check">
+                <input type="checkbox" name="schedule_days[]" value="{{ $num }}"
+                       @checked($isChecked)
+                       onchange="schedToggleDay({{ $num }}, this.checked)">
+                {{ $dayLabel }}
+            </label>
+            <div id="sched-times-{{ $num }}" class="sched-day-times"
+                 style="display:{{ $isChecked ? 'flex' : 'none' }}">
+                <input type="time" name="schedule_times[{{ $num }}][start]"
+                       value="{{ $dayTime['start'] ?? $defStart }}"
+                       id="sched-start-{{ $num }}"
+                       onblur="schedAutoEnd({{ $num }})">
+                <span>–</span>
+                <input type="time" name="schedule_times[{{ $num }}][end]"
+                       value="{{ $dayTime['end'] ?? $defEnd }}"
+                       id="sched-end-{{ $num }}">
+            </div>
+        </div>
+        @endforeach
+    </div>
 
     <button type="submit" class="btn mt-2">Зберегти</button>
 </form>
 
-
 <script>
-function toggleSchedLocation(suffix, val) {
-    document.getElementById('sched-loc-' + suffix).style.display = val === 'offline' ? 'block' : 'none';
-}
-function filterClassrooms(suffix, locationId) {
-    const sel = document.getElementById('sched-room-sel-' + suffix);
-    Array.from(sel.options).forEach(o => {
-        o.style.display = (!o.dataset.location || o.dataset.location == locationId || !locationId) ? '' : 'none';
+function edToggleLoc(v) { document.getElementById('ed-loc').style.display = v === 'offline' ? 'flex' : 'none'; }
+function edFilterRooms(locId) {
+    document.querySelectorAll('#ed-room-sel option[data-location]').forEach(o => {
+        o.style.display = (!locId || o.dataset.location == locId) ? '' : 'none';
     });
-    sel.value = '';
+    document.getElementById('ed-room-sel').value = '';
+}
+function schedToggleDay(day, show) {
+    document.getElementById('sched-times-' + day).style.display = show ? 'flex' : 'none';
+}
+function schedAutoEnd(day) {
+    const s = document.getElementById('sched-start-' + day);
+    const e = document.getElementById('sched-end-' + day);
+    if (!s.value || e.value) return;
+    const [h, m] = s.value.split(':').map(Number);
+    const t = h * 60 + m + 120;
+    e.value = String(Math.floor(t / 60) % 24).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
 }
 </script>
 

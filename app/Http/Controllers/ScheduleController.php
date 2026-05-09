@@ -59,6 +59,7 @@ class ScheduleController extends Controller
 
     public function update(Request $request, Lesson $lesson)
     {
+        $this->authorizeLesson($lesson);
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'mode' => 'required|in:online,offline',
@@ -81,6 +82,7 @@ class ScheduleController extends Controller
 
     public function destroy(Lesson $lesson)
     {
+        $this->authorizeLesson($lesson);
         $lesson->delete();
         return back()->with('success', 'Заняття видалено.');
     }
@@ -179,6 +181,7 @@ class ScheduleController extends Controller
         $user = auth()->user();
         if ($user->isAdmin()) return;
         if ($user->isTeacher() && $lesson->teacher_id === $user->id) return;
+        if ($user->isTeacher() && $lesson->course->coTeachers()->where('user_id', $user->id)->exists()) return;
         abort(403);
     }
 

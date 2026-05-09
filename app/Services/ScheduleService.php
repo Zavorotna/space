@@ -112,34 +112,41 @@ class ScheduleService
      * Skips templates, skips dates where a lesson already exists for this teacher+course+date.
      * Returns the number of lessons created.
      */
-    public function generateCourseLessons(Course $course, User $teacher): int
+    public function generateCourseLessons(Course $course, User $teacher, ?string $fromDate = null): int
     {
         if ($course->is_template || !$course->hasSchedule()) {
             return 0;
         }
 
-        $days       = array_map('intval', $course->schedule_days); // [1..7] ISO weekdays
-        $startTime  = substr($course->schedule_start_time, 0, 5);
-        $endTime    = substr($course->schedule_end_time, 0, 5);
-        $mode       = $course->schedule_mode ?? 'online';
-        $locationId = $course->schedule_location_id;
+        $days        = array_map('intval', $course->schedule_days);
+        $times       = $course->schedule_times ?? [];
+        $defaultStart = $course->schedule_start_time ? substr($course->schedule_start_time, 0, 5) : null;
+        $defaultEnd   = $course->schedule_end_time ? substr($course->schedule_end_time, 0, 5) : null;
+        $mode        = $course->schedule_mode ?? 'online';
+        $locationId  = $course->schedule_location_id;
         $classroomId = $course->schedule_classroom_id;
 
-        // Existing dates for this teacher+course to avoid duplicates
         $existing = Lesson::where('course_id', $course->id)
             ->where('teacher_id', $teacher->id)
             ->pluck('date')
             ->map(fn($d) => (string) $d)
-            ->flip(); // use as a set for O(1) lookup
+            ->flip();
 
-        $created = 0;
-        $current = $course->start_date->copy();
+        $created  = 0;
+        $start    = $fromDate
+            ? Carbon::parse(max($fromDate, $course->start_date->toDateString()))
+            : $course->start_date->copy();
+        $current  = $start->copy();
 
         while ($current->lte($course->end_date)) {
-            if (in_array($current->isoWeekday(), $days)) {
-                $dateStr = $current->toDateString();
+            $dayNum = $current->isoWeekday();
+            if (in_array($dayNum, $days)) {
+                $dateStr  = $current->toDateString();
+                $dayTimes = $times[(string) $dayNum] ?? $times[$dayNum] ?? null;
+                $startTime = $dayTimes['start'] ?? $defaultStart;
+                $endTime   = $dayTimes['end']   ?? $defaultEnd;
 
-                if (!isset($existing[$dateStr])) {
+                if ($startTime && $endTime && !isset($existing[$dateStr])) {
                     Lesson::create([
                         'course_id'    => $course->id,
                         'teacher_id'   => $teacher->id,

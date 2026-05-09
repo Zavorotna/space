@@ -41,12 +41,46 @@
 @if($mode === 'day')
     @forelse($lessons as $lesson)
     <div class="sched-lesson">
-        <strong>{{ $lesson->start_time }} — {{ $lesson->end_time }}</strong>
-        {{ $lesson->course->title }}
-        {{ $lesson->title ? "· {$lesson->title}" : '' }}
-        <span class="text-muted">[{{ $lesson->mode === 'online' ? 'Онлайн' : 'Офлайн' }}]</span>
-        @if($lesson->location) · {{ $lesson->location->name }} @endif
-        @if($lesson->classroom) ({{ $lesson->classroom->name }}) @endif
+        <div class="flex-between">
+            <div>
+                <strong>{{ substr($lesson->start_time,0,5) }} — {{ substr($lesson->end_time,0,5) }}</strong>
+                · {{ $lesson->course->title }}
+                {{ $lesson->title ? "· <em>{$lesson->title}</em>" : '' }}
+                <span class="text-muted text-sm">[{{ $lesson->mode === 'online' ? 'Онлайн' : 'Офлайн' }}]</span>
+                @if($lesson->location) · {{ $lesson->location->name }} @endif
+            </div>
+            @if(auth()->user()->isTeacher() || auth()->user()->isAdmin())
+            <details class="sched-edit-details">
+                <summary class="btn btn-xs btn-ghost">✏️</summary>
+                <div class="sched-edit-form">
+                    <form method="POST" action="{{ route('teacher.schedule.update', $lesson) }}">
+                        @csrf @method('PUT')
+                        <div class="form-group">
+                            <label>Тема</label>
+                            <input type="text" name="title" value="{{ $lesson->title }}" placeholder="Тема заняття">
+                        </div>
+                        <div class="flex-row">
+                            <div><label>Дата</label><br><input type="date" name="date" value="{{ $lesson->date->format('Y-m-d') }}" required></div>
+                            <div><label>Початок</label><br><input type="time" name="start_time" value="{{ substr($lesson->start_time,0,5) }}" required></div>
+                            <div><label>Кінець</label><br><input type="time" name="end_time" value="{{ substr($lesson->end_time,0,5) }}" required></div>
+                        </div>
+                        <div class="flex-row mt-1">
+                            <select name="mode">
+                                <option value="online" @selected($lesson->mode==='online')>Онлайн</option>
+                                <option value="offline" @selected($lesson->mode==='offline')>Офлайн</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Зберегти</button>
+                        </div>
+                    </form>
+                    <form method="POST" action="{{ route('teacher.schedule.destroy', $lesson) }}" class="mt-1"
+                          onsubmit="return confirm('Видалити заняття?')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-xs btn-danger">Видалити</button>
+                    </form>
+                </div>
+            </details>
+            @endif
+        </div>
     </div>
     @empty
     <p>Немає занять на цей день.</p>
@@ -132,7 +166,15 @@
     @csrf
     <select name="course_id" required>
         <option value="">Оберіть курс</option>
-        @foreach(auth()->user()->isTeacher() ? auth()->user()->taughtCourses : \App\Models\Course::active()->get() as $c)
+        @php
+            $u = auth()->user();
+            $addCourses = $u->isAdmin()
+                ? \App\Models\Course::where('is_template', false)->whereNotIn('status',['completed'])->orderBy('title')->get()
+                : \App\Models\Course::where('is_template', false)->whereNotIn('status',['completed'])
+                    ->where(fn($q) => $q->where('teacher_id', $u->id)->orWhereHas('coTeachers', fn($q2) => $q2->where('users.id', $u->id)))
+                    ->orderBy('title')->get();
+        @endphp
+        @foreach($addCourses as $c)
             <option value="{{ $c->id }}">{{ $c->title }}</option>
         @endforeach
     </select>
