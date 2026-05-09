@@ -17,50 +17,76 @@ class BirthdayRewards extends Command
 
     public function handle(CoinRewardService $coins, NotificationService $notif): void
     {
-        $today = now();
+        $today     = now();
+        $weekAhead = now()->addWeek();
 
-        // Find users with birthday today
-        $users = User::whereMonth('birthday', $today->month)
+        $admins = User::whereIn('role', ['superadmin', 'admin'])->get();
+
+        // ── Today's birthdays ─────────────────────────────────────
+        $todayBirthdays = User::whereMonth('birthday', $today->month)
             ->whereDay('birthday', $today->day)
             ->whereIn('role', ['student', 'teacher'])
             ->get();
 
-        foreach ($users as $user) {
+        foreach ($todayBirthdays as $user) {
+            // Award coins
             $coins->birthdayReward($user);
-            $this->info("Birthday reward for {$user->full_name}");
+
+            // Greet the birthday person
+            $notif->notify($user, 'birthday_today',
+                '🎂 З днем народження!',
+                'Hashtag Space вітає тебе! Нараховано бонусні монети.');
+
+            // Notify admins
+            foreach ($admins as $admin) {
+                if ($admin->id === $user->id) continue;
+                $notif->notify($admin, 'birthday_today',
+                    'Сьогодні день народження!',
+                    $user->full_name);
+            }
+
+            // If teacher — notify their active students
+            if ($user->isTeacher()) {
+                $studentIds = collect();
+                foreach ($user->taughtCourses()->whereIn('status', ['active', 'enrolling'])->with('activeStudents')->get() as $course) {
+                    foreach ($course->activeStudents as $student) {
+                        if ($studentIds->contains($student->id)) continue;
+                        $studentIds->push($student->id);
+                        $notif->notify($student, 'birthday_today',
+                            'Сьогодні день народження викладача!',
+                            $user->full_name);
+                    }
+                }
+            }
+
+            $this->info("Birthday processed: {$user->full_name}");
         }
 
-        // Notify admins/teachers about upcoming birthdays (1 week ahead)
-        $weekAhead = now()->addWeek();
+        // ── Upcoming birthdays (1 week ahead) ────────────────────
         $upcomingBirthdays = User::whereMonth('birthday', $weekAhead->month)
             ->whereDay('birthday', $weekAhead->day)
-            ->whereIn('role', ['student'])
+            ->whereIn('role', ['student', 'teacher'])
             ->get();
 
-        $adminsAndTeachers = User::whereIn('role', ['superadmin', 'admin'])->get();
-
         foreach ($upcomingBirthdays as $bUser) {
+            $dateLabel = $weekAhead->format('d.m');
+
             // Notify admins
-            foreach ($adminsAndTeachers as $admin) {
+            foreach ($admins as $admin) {
                 $notif->notify($admin, 'birthday_upcoming',
-                    "День народження через тиждень",
-                    "{$bUser->full_name} — {$weekAhead->format('d.m')}");
+                    'День народження через тиждень',
+                    "{$bUser->full_name} — {$dateLabel}");
             }
 
-            // Notify student's teacher(s)
-            foreach ($bUser->activeEnrollments as $course) {
-                $notif->notify($course->teacher, 'birthday_upcoming',
-                    "День народження студента через тиждень",
-                    "{$bUser->full_name} — {$weekAhead->format('d.m')}");
-            }
-        }
-
-        // Notify on the birthday itself
-        foreach ($users as $bUser) {
-            foreach ($adminsAndTeachers as $admin) {
-                $notif->notify($admin, 'birthday_today',
-                    "Сьогодні день народження!",
-                    "{$bUser->full_name}");
+            if ($bUser->isStudent()) {
+                // Notify the student's teachers
+                foreach ($bUser->activeEnrollments as $course) {
+                    if ($course->teacher) {
+                        $notif->notify($course->teacher, 'birthday_upcoming',
+                            'День народження студента через тиждень',
+                            "{$bUser->full_name} — {$dateLabel}");
+                    }
+                }
             }
         }
     }

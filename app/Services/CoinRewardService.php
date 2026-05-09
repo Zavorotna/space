@@ -107,21 +107,37 @@ class CoinRewardService
     {
         $year = now()->year;
 
-        // Per-course birthday reward
+        if ($user->isTeacher()) {
+            // Teachers get a fixed 500 coins (course_id = null)
+            $exists = BirthdayReward::where('user_id', $user->id)
+                ->whereNull('course_id')
+                ->where('year', $year)
+                ->exists();
+            if (!$exists) {
+                $this->wallet->reward($user, 500, 'День народження: +500');
+                BirthdayReward::create([
+                    'user_id'      => $user->id,
+                    'course_id'    => null,
+                    'year'         => $year,
+                    'coins_awarded'=> 500,
+                ]);
+            }
+            return;
+        }
+
+        // Students: 100 coins per active enrollment
         foreach ($user->activeEnrollments as $course) {
             $exists = BirthdayReward::where('user_id', $user->id)
                 ->where('course_id', $course->id)
                 ->where('year', $year)
                 ->exists();
-
             if (!$exists) {
-                $amount = $user->isTeacher() ? 500 : 100;
-                $this->wallet->reward($user, $amount, "День народження ({$course->title}): +{$amount}");
+                $this->wallet->reward($user, 100, "День народження ({$course->title}): +100");
                 BirthdayReward::create([
-                    'user_id' => $user->id,
-                    'course_id' => $course->id,
-                    'year' => $year,
-                    'coins_awarded' => $amount,
+                    'user_id'      => $user->id,
+                    'course_id'    => $course->id,
+                    'year'         => $year,
+                    'coins_awarded'=> 100,
                 ]);
             }
         }
