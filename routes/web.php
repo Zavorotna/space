@@ -48,6 +48,8 @@ Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.go
 Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
 Route::get('/auth/google/link', [GoogleController::class, 'linkRedirect'])->name('auth.google.link')->middleware('auth');
 Route::delete('/profile/google', [GoogleController::class, 'unlinkGoogle'])->name('auth.google.unlink')->middleware('auth');
+Route::get('/auth/google/claim', [GoogleController::class, 'showClaimForm'])->name('auth.google.claim');
+Route::post('/auth/google/claim', [GoogleController::class, 'processClaim'])->name('auth.google.claim.process');
 
 // ── LiqPay Callback (no auth, server-to-server) ───────────────
 Route::post('/liqpay/callback', [LiqPayCallbackController::class, 'handle'])->name('liqpay.callback');
