@@ -69,6 +69,10 @@
         <a href="{{ route('tests.index') }}">Тести</a>
         <a href="{{ route('schedule.index') }}">Розклад</a>
         <a href="{{ route('profile.edit') }}">Профіль</a>
+    @elseif($u->isRegistered())
+        <a href="{{ route('courses.public') }}">Курси</a>
+        <a href="{{ route('shop.index') }}">Магазин</a>
+        <a href="{{ route('profile.edit') }}">Профіль</a>
     @endif
 
     @if($u->isAdmin())
