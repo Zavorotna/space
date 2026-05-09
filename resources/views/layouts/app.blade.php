@@ -25,13 +25,11 @@
         @auth
         @php $u = auth()->user(); @endphp
 
-        @if($u->hasRole(['student','teacher','admin','superadmin']))
-        {{-- Wallet --}}
+        {{-- Wallet (all authenticated users) --}}
         <a href="{{ route('wallet.index') }}" class="icon-btn" title="Гаманець">
             <span class="coin-icon">◈</span>
             <span class="coin-balance" id="wallet-balance">{{ $u->wallet?->balance ?? 0 }}</span>
         </a>
-        @endif
 
         {{-- Notifications bell --}}
         <a href="{{ route('notifications.index') }}" class="icon-btn" title="Сповіщення">

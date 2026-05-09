@@ -40,11 +40,13 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        $nameRegex = ['regex:/^[\p{L}\s\'\-ʼ]+$/u'];
+
         $rules = [
-            'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'phone'      => 'required|string|max:20|unique:users,phone,' . $user->id,
-            'email'      => 'nullable|email|unique:users,email,' . $user->id,
+            'first_name' => array_merge(['required', 'string', 'max:50'], $nameRegex),
+            'last_name'  => array_merge(['required', 'string', 'max:50'], $nameRegex),
+            'phone'      => ['required', 'string', 'max:20', 'regex:/^[+0-9\s\-\(\)]+$/', 'unique:users,phone,' . $user->id],
+            'email'      => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'bio'        => 'nullable|string|max:2000',
             'avatar'     => 'nullable|image|max:2048',
         ];

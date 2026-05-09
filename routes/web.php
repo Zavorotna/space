@@ -96,6 +96,9 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
     Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
     Route::get('/shop/{product}', [ShopController::class, 'show'])->name('shop.show');
 
+    // ── Wallet index (all roles — registered users see balance too) ─
+    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
+
     // ── Resumes (registered can view) ──────────────────────────
     Route::get('/resumes', [ResumeController::class, 'index'])->name('resumes.index');
     Route::get('/resumes/{resume}', [ResumeController::class, 'show'])->name('resumes.show');
@@ -137,8 +140,7 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         Route::post('/graduation-projects/{project}/submit', [GraduationProjectController::class, 'submit'])->name('graduation.submit');
         Route::post('/graduation-submissions/{submission}/freeze', [GraduationProjectController::class, 'freezeDeadline'])->name('graduation.freeze');
 
-        // Wallet
-        Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
+        // Wallet (topup/transfer/withdraw/vip require student+)
         Route::get('/wallet/topup', [WalletController::class, 'topUpForm'])->name('wallet.topup');
         Route::post('/wallet/topup', [WalletController::class, 'topUp'])->name('wallet.topup.process');
         Route::get('/wallet/transfer', [WalletController::class, 'transferForm'])->name('wallet.transfer');
