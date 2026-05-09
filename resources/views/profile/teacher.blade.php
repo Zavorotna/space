@@ -13,6 +13,8 @@
     <p>Викладач</p>
 </div>
 
+@include('partials._admin_user_info')
+
 @if($user->bio)
     <h2>Про мене</h2>
     <p>{!! nl2br(e($user->bio)) !!}</p>

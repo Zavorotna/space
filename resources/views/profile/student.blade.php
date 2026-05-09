@@ -15,6 +15,7 @@
         <p>Серія входів: {{ $user->login_streak }} днів</p>
     @endif
 </div>
+@include('partials._admin_user_info')
 
 @if($user->parents->count())
     <h2>Батьки</h2>

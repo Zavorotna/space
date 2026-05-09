@@ -15,6 +15,7 @@
         <p>Серія входів: {{ $user->login_streak }} днів</p>
     @endif
 </div>
+@include('partials._admin_user_info')
 
 {{-- Children --}}
 <h2>Діти</h2>

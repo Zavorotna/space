@@ -22,6 +22,7 @@
         <p>Серія входів: {{ $user->login_streak }} днів</p>
     @endif
 </div>
+@include('partials._admin_user_info')
 
 @if($user->bio)
     <h2>Про себе</h2>

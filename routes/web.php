@@ -46,6 +46,8 @@ Route::get('/csrf-token', fn() => response()->json(['token' => csrf_token()]))->
 // ── Google OAuth ───────────────────────────────────────────────
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
 Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
+Route::get('/auth/google/link', [GoogleController::class, 'linkRedirect'])->name('auth.google.link')->middleware('auth');
+Route::delete('/profile/google', [GoogleController::class, 'unlinkGoogle'])->name('auth.google.unlink')->middleware('auth');
 
 // ── LiqPay Callback (no auth, server-to-server) ───────────────
 Route::post('/liqpay/callback', [LiqPayCallbackController::class, 'handle'])->name('liqpay.callback');
