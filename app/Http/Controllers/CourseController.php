@@ -255,7 +255,7 @@ class CourseController extends Controller
             'program'                => 'nullable|string',
             'price'                  => 'required|numeric|min:0',
             'billing_period'         => 'required|in:one_time,monthly,per_lesson',
-            'status'                 => 'required|in:waiting,enrolling,active,completed',
+            'status'                 => 'nullable|in:waiting,enrolling,active,completed',
             'type'                   => 'required|in:group,individual',
             'start_date'             => 'nullable|date',
             'end_date'               => 'nullable|date',

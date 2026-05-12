@@ -34,6 +34,7 @@
             <option value="per_lesson" @selected($course->billing_period==='per_lesson')>За заняття</option>
         </select>
     </div>
+    @if(!$course->is_template)
     <div class="form-group"><label>Статус</label>
         <select name="status">
             @foreach(['waiting'=>'Очікування','enrolling'=>'Набір','active'=>'Активний','completed'=>'Завершений'] as $k=>$v)
@@ -41,6 +42,7 @@
             @endforeach
         </select>
     </div>
+    @endif
     <div class="form-group"><label>Тип</label>
         <select name="type">
             <option value="group"      @selected($course->type==='group')>Груповий</option>
@@ -82,12 +84,14 @@
         </div>
     </div>
 
+    @if(!$course->is_template)
     <div class="form-group"><label>Telegram</label><input type="url" name="telegram_link" value="{{ $course->telegram_link }}"></div>
     <div class="form-group"><label>Дата початку</label><input type="date" name="start_date" value="{{ $course->start_date?->format('Y-m-d') }}"></div>
     <div class="form-group"><label>Дата закінчення</label><input type="date" name="end_date" value="{{ $course->end_date?->format('Y-m-d') }}"></div>
     <div class="form-group">
         <label><input type="checkbox" name="is_published" value="1" @checked($course->is_published)> Опубліковано</label>
     </div>
+    @endif
     <div class="form-group">
         <label>Фото</label>
         @if($course->getFirstMediaUrl('cover'))
@@ -183,6 +187,7 @@
 
 <hr>
 
+@if(!$course->is_template)
 {{-- ══ TEACHERS SECTION ══ --}}
 <h2>Викладачі</h2>
 <div class="card-panel">
@@ -289,6 +294,7 @@
     <input type="text" name="phone" placeholder="Номер телефону" style="width:160px">
     <button type="submit" class="btn btn-sm">Додати</button>
 </form>
+@endif
 
 <hr>
 
