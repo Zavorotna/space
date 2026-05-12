@@ -86,8 +86,7 @@
     <div class="form-group"><label>Дата початку</label><input type="date" name="start_date" value="{{ $course->start_date?->format('Y-m-d') }}"></div>
     <div class="form-group"><label>Дата закінчення</label><input type="date" name="end_date" value="{{ $course->end_date?->format('Y-m-d') }}"></div>
     <div class="form-group">
-        <label><input type="checkbox" name="is_published" value="1" @checked($course->is_published)> Опубліковано</label><br>
-        <label><input type="checkbox" name="has_graduation_project" value="1" @checked($course->has_graduation_project)> Є випускний проєкт</label>
+        <label><input type="checkbox" name="is_published" value="1" @checked($course->is_published)> Опубліковано</label>
     </div>
     <div class="form-group">
         <label>Фото</label>
