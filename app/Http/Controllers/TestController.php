@@ -69,7 +69,7 @@ class TestController extends Controller
         $validated['course_id'] = $courseId;
         $test = Test::create($validated);
 
-        return redirect()->route('teacher.tests.edit', $test)->with('success', 'Тест створено.');
+        return redirect()->route('tests.edit', $test)->with('success', 'Тест створено.');
     }
 
     public function edit(Test $test)

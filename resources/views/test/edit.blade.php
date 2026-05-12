@@ -6,7 +6,7 @@
 
 <h1>Редагування тесту</h1>
 
-<form method="POST" action="{{ route('teacher.tests.update', $test) }}">
+<form method="POST" action="{{ route('tests.update', $test) }}">
     @csrf @method('PUT')
     <div>
         <label>Назва тесту</label>
@@ -24,7 +24,7 @@
 </form>
 
 @if(auth()->user()->isAdmin())
-<form method="POST" action="{{ route('teacher.tests.destroy', $test) }}" id="delete-test-form" class="mt-2">
+<form method="POST" action="{{ route('tests.destroy', $test) }}" id="delete-test-form" class="mt-2">
     @csrf @method('DELETE')
     <button type="button" onclick="showTestDeleteConfirm()">Видалити тест</button>
 </form>
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 @foreach($test->questions as $index => $question)
 <div class="question-card">
-    <form method="POST" action="{{ route('teacher.tests.updateQuestion', $question) }}">
+    <form method="POST" action="{{ route('tests.updateQuestion', $question) }}">
         @csrf @method('PUT')
         <strong>Питання {{ $index + 1 }}</strong>
         <div>
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <button type="submit">Оновити питання</button>
     </form>
 
-    <form method="POST" action="{{ route('teacher.tests.deleteQuestion', $question) }}" class="form-inline"
+    <form method="POST" action="{{ route('tests.deleteQuestion', $question) }}" class="form-inline"
           onsubmit="return confirm('Видалити це питання?')">
         @csrf @method('DELETE')
         <button type="submit">Видалити питання</button>
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <hr>
 
 <h2>Додати нове питання</h2>
-<form method="POST" action="{{ route('teacher.tests.addQuestion', $test) }}" id="new-question-form">
+<form method="POST" action="{{ route('tests.addQuestion', $test) }}" id="new-question-form">
     @csrf
     <div>
         <label>Текст питання</label>

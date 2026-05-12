@@ -49,8 +49,8 @@
                     <td>{{ $test->passing_score }}%</td>
                     <td>{{ $test->attempts->count() }}</td>
                     <td>
-                        <a href="{{ route('teacher.tests.edit', $test) }}">Редагувати</a>
-                        <a href="{{ route('teacher.tests.statistics', $test) }}">Статистика</a>
+                        <a href="{{ route('tests.edit', $test) }}">Редагувати</a>
+                        <a href="{{ route('tests.statistics', $test) }}">Статистика</a>
                     </td>
                 </tr>
             @endforeach
