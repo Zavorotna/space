@@ -83,7 +83,6 @@
     </div>
 
     <div class="form-group"><label>Telegram</label><input type="url" name="telegram_link" value="{{ $course->telegram_link }}"></div>
-    <div class="form-group"><label>Дата відкритого заняття</label><input type="date" name="intro_date" value="{{ $course->intro_date?->format('Y-m-d') }}"></div>
     <div class="form-group"><label>Дата початку</label><input type="date" name="start_date" value="{{ $course->start_date?->format('Y-m-d') }}"></div>
     <div class="form-group"><label>Дата закінчення</label><input type="date" name="end_date" value="{{ $course->end_date?->format('Y-m-d') }}"></div>
     <div class="form-group">

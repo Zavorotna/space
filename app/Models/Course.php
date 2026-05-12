@@ -14,7 +14,7 @@ class Course extends Model implements HasMedia
 
     protected $fillable = [
         'title', 'description', 'program', 'teacher_id', 'price', 'billing_period',
-        'status', 'type', 'intro_date', 'start_date', 'end_date', 'telegram_link',
+        'status', 'type', 'start_date', 'end_date', 'telegram_link',
         'liqpay_merchant_id', 'liqpay_private_key', 'has_graduation_project',
         'template_id', 'is_published', 'is_template',
         'schedule_days', 'schedule_times', 'schedule_start_time', 'schedule_end_time',
@@ -24,7 +24,6 @@ class Course extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'intro_date'             => 'date',
             'start_date'             => 'date',
             'end_date'               => 'date',
             'price'                  => 'decimal:2',

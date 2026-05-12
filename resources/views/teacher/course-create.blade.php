@@ -78,7 +78,6 @@
         </select>
     </div>
     <div class="form-group"><label>Telegram посилання</label><input type="url" name="telegram_link" value="{{ old('telegram_link') }}"></div>
-    <div class="form-group"><label>Дата відкритого заняття</label><input type="date" name="intro_date" value="{{ old('intro_date') }}"></div>
     <div class="form-group"><label>Дата початку</label><input type="date" name="start_date" value="{{ old('start_date') }}"></div>
     <div class="form-group"><label>Дата закінчення</label><input type="date" name="end_date" value="{{ old('end_date') }}"></div>
     <div class="form-group"><label><input type="checkbox" name="has_graduation_project" value="1" checked> Є випускний проєкт</label></div>
