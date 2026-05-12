@@ -77,11 +77,6 @@
             <option value="per_lesson">За заняття</option>
         </select>
     </div>
-    <div class="form-group"><label>Telegram посилання</label><input type="url" name="telegram_link" value="{{ old('telegram_link') }}"></div>
-    <div class="form-group"><label>Дата початку</label><input type="date" name="start_date" value="{{ old('start_date') }}"></div>
-    <div class="form-group"><label>Дата закінчення</label><input type="date" name="end_date" value="{{ old('end_date') }}"></div>
-    <div class="form-group"><label><input type="checkbox" name="has_graduation_project" value="1" checked> Є випускний проєкт</label></div>
-
     <hr>
     <h3>Розклад занять</h3>
     <p class="text-xs text-muted">Якщо заповнено — заняття автоматично з'являться в графіку.</p>

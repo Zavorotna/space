@@ -196,7 +196,6 @@ class CourseController extends Controller
             'start_date'             => 'nullable|date',
             'end_date'               => 'nullable|date|after_or_equal:start_date',
             'telegram_link'          => 'nullable|url',
-            'has_graduation_project' => 'boolean',
             'is_template'            => 'boolean',
             'cover'                  => 'nullable|image|max:5120',
             'schedule_days'            => 'nullable|array',
