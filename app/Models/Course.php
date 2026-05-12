@@ -153,10 +153,23 @@ class Course extends Model implements HasMedia
         $new->is_template = false;
         $new->save();
 
+        // Copy topics
+        $topicMap = [];
+        foreach ($this->topics as $topic) {
+            $newTopic = $topic->replicate();
+            $newTopic->course_id = $new->id;
+            $newTopic->save();
+            $topicMap[$topic->id] = $newTopic->id;
+        }
+
         // Copy tests
         foreach ($this->tests as $test) {
             $newTest = $test->replicate();
             $newTest->course_id = $new->id;
+            // Update activation_topic_id if it exists and was mapped
+            if ($test->activation_topic_id && isset($topicMap[$test->activation_topic_id])) {
+                $newTest->activation_topic_id = $topicMap[$test->activation_topic_id];
+            }
             $newTest->save();
             foreach ($test->questions as $q) {
                 $newQ = $q->replicate();
