@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Редагування: ' . $course->title)
 @section('content')
-<h1>Редагування курсу: {{ $course->title }}</h1>
+<h1>Редагування {{ $course->is_template ? 'шаблону' : 'курсу' }}: {{ $course->title }}</h1>
 
 {{-- ══ MAIN FORM ══ --}}
 <form method="POST" action="{{ route('teacher.courses.update', $course) }}" enctype="multipart/form-data">
