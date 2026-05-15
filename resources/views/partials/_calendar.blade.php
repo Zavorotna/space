@@ -392,6 +392,7 @@
         <div class="lm-tab-row">
             <button type="button" class="lm-btn lm-btn--cancel" onclick="lmShowSection('cancel')" id="lm-tab-cancel">Скасувати заняття</button>
             <button type="button" class="lm-btn lm-btn--reschedule" onclick="lmShowSection('reschedule')" id="lm-tab-reschedule">Перенести заняття</button>
+            <button type="button" class="lm-btn lm-btn--danger" onclick="lmShowSection('delete')" id="lm-tab-delete">Видалити заняття</button>
             <button type="button" class="lm-btn lm-btn--ghost" onclick="closeLessonModal()">Закрити</button>
         </div>
 
@@ -431,6 +432,19 @@
                 <div class="lm-actions">
                     <button type="submit" class="lm-btn lm-btn--reschedule">Підтвердити перенесення</button>
                     <button type="button" class="lm-btn lm-btn--ghost" onclick="lmShowSection(null)">Назад</button>
+                </div>
+            </form>
+        </div>
+
+        {{-- Delete form --}}
+        <div id="lm-sec-delete" style="display:none;">
+            <p class="lm-section-title lm-section-title--danger">Видалення заняття</p>
+            <p style="color:#d32f2f; margin:10px 0;">Ця дія не може бути скасована. Видаліть заняття, тільки якщо це помилка.</p>
+            <form id="lm-form-delete" method="POST">
+                @csrf @method('DELETE')
+                <div class="lm-actions">
+                    <button type="submit" class="lm-btn lm-btn--danger" onclick="return confirm('Ви впевнені? Це видалить заняття назавжди.')">Видалити безповоротно</button>
+                    <button type="button" class="lm-btn lm-btn--ghost" onclick="lmShowSection(null)">Скасувати</button>
                 </div>
             </form>
         </div>
@@ -480,6 +494,7 @@ function openLessonModal(el) {
         const base = '{{ url("/teacher/schedule") }}/' + lid;
         document.getElementById('lm-form-cancel').action     = base + '/cancel';
         document.getElementById('lm-form-reschedule').action = base + '/reschedule';
+        document.getElementById('lm-form-delete').action     = base;
 
         const today = new Date().toISOString().slice(0,10);
         document.getElementById('lm-new-date').min   = today;
@@ -500,7 +515,7 @@ function closeLessonModal() {
 }
 
 function lmShowSection(name) {
-    ['cancel','reschedule'].forEach(s => {
+    ['cancel','reschedule','delete'].forEach(s => {
         document.getElementById('lm-sec-' + s).style.display = (s === name) ? 'block' : 'none';
     });
 }
