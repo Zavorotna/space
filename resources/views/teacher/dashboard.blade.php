@@ -121,14 +121,41 @@ function toggleMakeupDate(id) {
 <p>Домашок на перевірку: <strong>{{ $pendingHomework }}</strong></p>
 @endif
 
-<h2>Замітки</h2>
-@foreach($notes as $note)
-<div>{{ $note->content }}</div>
-@endforeach
+<hr>
+<h2>Мої замітки</h2>
+@forelse($notes as $note)
+<div style="padding:10px; background:#fff8e1; margin:5px 0; border-radius:4px; border-left:4px solid #ffc107;">
+    <div style="font-size:0.9em; color:#666;">
+        @if($note->reminder_time)
+            📅 {{ $note->reminder_time->format('d.m.Y H:i') }}
+        @else
+            📝 {{ $note->created_at->format('d.m.Y H:i') }}
+        @endif
+    </div>
+    <p style="margin:5px 0;">{{ $note->content }}</p>
+    <div style="font-size:0.85em;">
+        <form method="POST" action="{{ route('notes.destroy', $note) }}" style="display:inline;">
+            @csrf @method('DELETE')
+            <button type="submit" class="btn btn-xs btn-danger" onclick="return confirm('Видалити замітку?')">Видалити</button>
+        </form>
+    </div>
+</div>
+@empty
+<p class="text-subtle">Немає особистих заміток.</p>
+@endforelse
+
+<h3>Додати замітку</h3>
 <form method="POST" action="{{ route('notes.store') }}">
     @csrf
-    <textarea name="content" placeholder="Нова замітка..." required></textarea>
-    <button type="submit">Зберегти</button>
+    <div class="form-group">
+        <label>Замітка</label>
+        <textarea name="content" placeholder="Текст замітки..." required></textarea>
+    </div>
+    <div class="form-group">
+        <label>Нагадування (опціонально)</label>
+        <input type="datetime-local" name="reminder_time" placeholder="Час нагадування">
+    </div>
+    <button type="submit" class="btn btn-primary">Зберегти замітку</button>
 </form>
 
 <h2>Гаманець</h2>

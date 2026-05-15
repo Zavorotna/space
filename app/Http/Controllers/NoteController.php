@@ -21,6 +21,7 @@ class NoteController extends Controller
     {
         $validated = $request->validate([
             'content' => 'required|string|max:5000',
+            'reminder_time' => 'nullable|date_format:Y-m-d\TH:i',
             'recipient_id' => 'nullable|exists:users,id',
             'course_id' => 'nullable|exists:courses,id',
         ]);
@@ -30,6 +31,7 @@ class NoteController extends Controller
             'recipient_id' => $validated['recipient_id'] ?? null,
             'course_id' => $validated['course_id'] ?? null,
             'content' => $validated['content'],
+            'reminder_time' => $validated['reminder_time'] ?? null,
         ]);
 
         // If teacher sends note to student, notify

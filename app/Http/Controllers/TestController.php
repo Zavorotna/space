@@ -26,7 +26,7 @@ class TestController extends Controller
         }
 
         // Student: tests from enrolled courses
-        $courseIds = $user->activeEnrollments()->pluck('courses.id');
+        $courseIds = $user->activeEnrollments()->pluck('id');
         $tests = Test::whereIn('course_id', $courseIds)->with(['course'])->get();
         $attempts = $user->testAttempts()->whereIn('test_id', $tests->pluck('id'))->latest()->get()->groupBy('test_id');
 

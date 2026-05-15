@@ -304,7 +304,7 @@ class ScheduleController extends Controller
         if ($user->isTeacher()) {
             $query->where('teacher_id', $user->id);
         } elseif ($user->isStudent()) {
-            $courseIds = $user->activeEnrollments()->pluck('courses.id');
+            $courseIds = $user->activeEnrollments()->pluck('id');
             $query->whereIn('course_id', $courseIds);
         }
 

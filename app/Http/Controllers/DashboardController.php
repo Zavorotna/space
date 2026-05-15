@@ -79,6 +79,8 @@ class DashboardController extends Controller
             ->with('deletionRequest.deletable', 'deletionRequest.requester')
             ->latest()->get();
 
+        $notes = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
+
         $data = [
             'pendingApplications'   => \App\Models\CourseApplication::where('status', 'pending')->count(),
             'pendingWithdrawalsList'=> \App\Models\WithdrawalRequest::with('user')->where('status', 'pending')->latest()->get(),
@@ -90,6 +92,7 @@ class DashboardController extends Controller
             'schedLocations'        => $schedLocations,
             'schedCourses'          => $schedCourses,
             'schedBirthdays'        => $schedBirthdays,
+            'notes'                 => $notes,
             'adminBanners'          => $adminBanners,
         ];
 
@@ -177,7 +180,7 @@ class DashboardController extends Controller
         $schedDate = Carbon::parse($request->get('schedule_date', today()));
         [$start, $end] = $this->scheduleRange($schedDate, $schedMode);
 
-        $courseIds = $user->activeEnrollments()->pluck('courses.id');
+        $courseIds = $user->activeEnrollments()->pluck('id');
 
         $schedLessons = Lesson::with(['course', 'location'])
             ->whereIn('course_id', $courseIds)

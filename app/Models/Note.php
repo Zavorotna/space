@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Note extends Model
 {
-    protected $fillable = ['user_id', 'recipient_id', 'course_id', 'content', 'is_read'];
-    protected function casts(): array { return ['is_read' => 'boolean']; }
+    protected $fillable = ['user_id', 'recipient_id', 'course_id', 'content', 'reminder_time', 'is_read'];
+    protected function casts(): array { return ['is_read' => 'boolean', 'reminder_time' => 'datetime']; }
 
     public function author() { return $this->belongsTo(User::class, 'user_id'); }
     public function recipient() { return $this->belongsTo(User::class, 'recipient_id'); }
