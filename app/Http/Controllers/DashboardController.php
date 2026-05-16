@@ -58,8 +58,15 @@ class DashboardController extends Controller
         $schedDate = Carbon::parse($request->get('schedule_date', today()));
         [$start, $end] = $this->scheduleRange($schedDate, $schedMode);
 
-        // Admin dashboard shows no lessons - view all on /schedule page
-        $schedLessons = collect();
+        // Show only admin's own lessons if they teach
+        $schedLessons = Lesson::with(['course', 'teacher', 'location', 'classroom'])
+            ->where(function ($q) use ($user) {
+                $q->where('teacher_id', $user->id)
+                  ->orWhereHas('course.coTeachers', fn($q2) => $q2->where('users.id', $user->id));
+            })
+            ->whereBetween('date', [$start, $end])
+            ->orderBy('date')->orderBy('start_time')
+            ->get();
 
         $schedEvents = CalendarEvent::whereBetween('date', [$start, $end])
             ->orderBy('date')->orderBy('start_time')
