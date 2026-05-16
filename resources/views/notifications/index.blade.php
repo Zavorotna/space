@@ -17,7 +17,7 @@
     @foreach($notifications as $notification)
     <div class="card {{ !$notification->is_read ? 'card--unread' : '' }}">
         <p><strong>{{ $notification->title }}</strong></p>
-        <p>{{ $notification->body }}</p>
+        @if($notification->message)<p>{{ $notification->message }}</p>@endif
         <p>{{ $notification->created_at->format('d.m.Y H:i') }}</p>
         @if($notification->link)
             <a href="{{ $notification->link }}">Перейти</a>
