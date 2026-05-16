@@ -105,7 +105,7 @@ class DashboardController extends Controller
         $schedDate = Carbon::parse($request->get('schedule_date', today()));
         [$start, $end] = $this->scheduleRange($schedDate, $schedMode);
 
-        $schedLessons = Lesson::with(['course', 'location', 'classroom'])
+        $schedLessons = Lesson::with(['course', 'teacher', 'location', 'classroom'])
             ->where(function ($q) use ($user) {
                 $q->where('teacher_id', $user->id)
                   ->orWhereHas('course.coTeachers', fn($q2) => $q2->where('users.id', $user->id));
@@ -134,7 +134,10 @@ class DashboardController extends Controller
             ->count();
 
         $lessonsNeedingReport = Lesson::with(['course'])
-            ->where('teacher_id', $user->id)
+            ->where(function ($q) use ($user) {
+                $q->where('teacher_id', $user->id)
+                  ->orWhereHas('course.coTeachers', fn($q2) => $q2->where('users.id', $user->id));
+            })
             ->where(function ($q) {
                 $q->where('date', '<', today())
                   ->orWhere(function ($q2) {

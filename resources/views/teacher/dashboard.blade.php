@@ -18,10 +18,11 @@
 ])
 
 {{-- Lesson completion reports --}}
-@if($lessonsNeedingReport->count())
+@if($lessonsNeedingReport->count() > 0)
 <div class="report-section">
     <h2>Потрібен звіт ({{ $lessonsNeedingReport->count() }})</h2>
     @foreach($lessonsNeedingReport as $lesson)
+    @if($lesson->course)
     @php $isIndividual = $lesson->course->type === 'individual'; @endphp
     <div class="report-item">
         <strong>{{ $lesson->date->format('d.m.Y') }}</strong>
@@ -78,6 +79,7 @@
             <button type="submit" class="btn mt-1">Зберегти звіт</button>
         </form>
     </div>
+    @endif
     @endforeach
 </div>
 <script>
