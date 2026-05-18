@@ -146,8 +146,8 @@ function toggleMakeupDate(id) {
 <p class="text-subtle">Немає особистих заміток.</p>
 @endforelse
 
-<h3>Додати замітку</h3>
-<form method="POST" action="{{ route('notes.store') }}">
+<button type="button" class="btn btn-ghost mt-1" onclick="this.style.display='none';document.getElementById('note-form-teacher').style.display='block'">+ Додати замітку</button>
+<form id="note-form-teacher" method="POST" action="{{ route('notes.store') }}" style="display:none;">
     @csrf
     <div class="form-group">
         <label>Замітка</label>
@@ -155,9 +155,12 @@ function toggleMakeupDate(id) {
     </div>
     <div class="form-group">
         <label>Нагадування (опціонально)</label>
-        <input type="datetime-local" name="reminder_time" placeholder="Час нагадування">
+        <input type="datetime-local" name="reminder_time">
     </div>
-    <button type="submit" class="btn btn-primary">Зберегти замітку</button>
+    <div style="display:flex;gap:8px;">
+        <button type="submit" class="btn btn-primary">Зберегти</button>
+        <button type="button" class="btn btn-ghost" onclick="this.closest('form').style.display='none';document.querySelector('[onclick*=note-form-teacher]').style.display=''">Скасувати</button>
+    </div>
 </form>
 
 <h2>Гаманець</h2>

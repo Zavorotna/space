@@ -47,7 +47,7 @@
                 <tr>
                     <td>{{ $test->title }}</td>
                     <td>{{ $test->passing_score }}%</td>
-                    <td>{{ $test->attempts->count() }}</td>
+                    <td>{{ $test->attempts_count }}</td>
                     <td>
                         <a href="{{ route('tests.edit', $test) }}">Редагувати</a>
                         <a href="{{ route('tests.statistics', $test) }}">Статистика</a>

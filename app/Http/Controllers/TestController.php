@@ -15,11 +15,16 @@ class TestController extends Controller
         if ($user->isTeacher() || $user->isAdmin()) {
             $tests = Test::whereHas('course', function ($q) use ($user) {
                 if (!$user->isAdmin()) {
-                    $q->where('teacher_id', $user->id);
+                    $q->where('teacher_id', $user->id)
+                      ->orWhereHas('coTeachers', fn($q2) => $q2->where('users.id', $user->id));
                 }
-            })->with(['course', 'attempts'])->latest()->get();
+            })->with(['course'])->withCount('attempts')->latest()->get();
 
-            $courses = \App\Models\Course::when(!$user->isAdmin(), fn($q) => $q->where('teacher_id', $user->id))
+            $courses = \App\Models\Course::when(!$user->isAdmin(), function ($q) use ($user) {
+                    $q->where('teacher_id', $user->id)
+                      ->orWhereHas('coTeachers', fn($q2) => $q2->where('users.id', $user->id));
+                })
+                ->where('is_template', false)
                 ->orderBy('title')->get();
 
             return view('test.index', compact('tests', 'courses'));
