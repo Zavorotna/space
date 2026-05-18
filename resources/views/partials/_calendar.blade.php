@@ -292,6 +292,7 @@
             $dl  = $lessonsByDate->get($key, collect());
             $de  = $eventsByDate->get($key, collect());
             $db  = $birthdaysByDate->get($key, collect());
+            $dn  = $notesByDate->get($key, collect());
             $isT = $key === $today;
         @endphp
         <div class="cal-week-col {{ $isT ? 'cal-week-col--today' : '' }}">
@@ -339,7 +340,13 @@
                 <div class="cal-wi-title">{{ $b['user']->full_name }}</div>
             </div>
             @endforeach
-            @if($dl->isEmpty() && $de->isEmpty() && $db->isEmpty())
+            @foreach($dn as $note)
+            <div class="cal-week-item" style="border-left:3px solid #f9c74f;">
+                <div class="cal-wi-time">📝 {{ $note->reminder_time->format('H:i') }}</div>
+                <div class="cal-wi-title">{{ Str::limit($note->content, 40) }}</div>
+            </div>
+            @endforeach
+            @if($dl->isEmpty() && $de->isEmpty() && $db->isEmpty() && $dn->isEmpty())
             <div class="cal-week-empty">—</div>
             @endif
         </div>
@@ -366,11 +373,12 @@
             $lCnt   = $lessonsByDate->get($key, collect())->count();
             $eCnt   = $eventsByDate->get($key, collect())->count();
             $bCnt   = $birthdaysByDate->get($key, collect())->count();
+            $nCnt   = $notesByDate->get($key, collect())->count();
             $inMon  = $cell->month === $mStart->month;
             $isT    = $key === $today;
         @endphp
         <div class="cal-month-cell {{ !$inMon ? 'cal-mc--out' : '' }} {{ $isT ? 'cal-mc--today' : '' }}">
-            @if($lCnt || $eCnt || $bCnt)
+            @if($lCnt || $eCnt || $bCnt || $nCnt)
             <a href="{{ route('dashboard', ['schedule_mode'=>'day','schedule_date'=>$key]) }}" class="cal-mc-num cal-mc-num--link">{{ $cell->day }}</a>
             @else
             <span class="cal-mc-num">{{ $cell->day }}</span>
@@ -379,6 +387,7 @@
                 @if($lCnt) <span class="cal-dot cal-dot--blue" title="{{ $lCnt }} занять"></span> @endif
                 @if($eCnt) <span class="cal-dot cal-dot--orange" title="{{ $eCnt }} подій"></span> @endif
                 @if($bCnt) <span class="cal-dot cal-dot--pink" title="{{ $bCnt }} днів народження"></span> @endif
+                @if($nCnt) <span class="cal-dot" style="background:#f9c74f;" title="{{ $nCnt }} нагадувань"></span> @endif
             </div>
         </div>
         @php $cell->addDay(); @endphp
