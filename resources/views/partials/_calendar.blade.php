@@ -33,6 +33,9 @@
     $lessonsByDate   = $schedLessons->groupBy(fn($l) => $l->date->format('Y-m-d'));
     $eventsByDate    = $schedEvents->groupBy(fn($e) => $e->date->format('Y-m-d'));
     $birthdaysByDate = $schedBirthdays ?? collect();
+    $notesByDate     = isset($schedNotes)
+        ? $schedNotes->filter(fn($n) => $n->reminder_time)->groupBy(fn($n) => $n->reminder_time->format('Y-m-d'))
+        : collect();
 
     $evColors = ['graduation' => '#f5a623', 'meeting' => '#27ae60', 'holiday' => '#8e44ad', 'other' => '#7f8c8d'];
     $evLabels = ['graduation' => 'Випуск', 'meeting' => 'Зустріч', 'holiday' => 'Вихідний', 'other' => 'Подія'];
@@ -186,9 +189,11 @@
         $dayLessons    = $lessonsByDate->get($dayKey, collect());
         $dayEvents     = $eventsByDate->get($dayKey, collect());
         $dayBirthdays  = $birthdaysByDate->get($dayKey, collect());
+        $dayNotes      = $notesByDate->get($dayKey, collect());
         $allItems      = $dayLessons->map(fn($l) => ['kind'=>'lesson','time'=>$l->start_time,'obj'=>$l])
                             ->merge($dayEvents->map(fn($e) => ['kind'=>'event','time'=>$e->start_time ?? '00:00','obj'=>$e]))
                             ->merge($dayBirthdays->map(fn($b) => ['kind'=>'birthday','time'=>'00:00','obj'=>$b]))
+                            ->merge($dayNotes->map(fn($n) => ['kind'=>'note','time'=>$n->reminder_time->format('H:i:s'),'obj'=>$n]))
                             ->sortBy('time');
     @endphp
     <div class="cal-day">
@@ -241,6 +246,15 @@
                     @if($bu->birthday)
                     <div class="cal-meta">{{ $bu->birthday->format('d.m.Y') }}</div>
                     @endif
+                </div>
+            </div>
+            @elseif($item['kind'] === 'note')
+            @php $n = $item['obj']; @endphp
+            <div class="cal-item" style="border-left-color:#f9c74f;">
+                <div class="cal-item-time">{{ $n->reminder_time->format('H:i') }}</div>
+                <div class="cal-item-body">
+                    <span class="cal-badge-ev" style="background:#f9c74f;color:#333;">📝 Нагадування</span>
+                    <div class="cal-meta">{{ Str::limit($n->content, 80) }}</div>
                 </div>
             </div>
             @else

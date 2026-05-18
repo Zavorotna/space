@@ -5,6 +5,8 @@
 
 @include('partials._admin_banners')
 
+@include('partials._lessons_needing_report', ['lessonsNeedingReport' => $lessonsNeedingReport])
+
 @if($pendingApplications > 0)
 <p class="mb-1">
     Заявок на розгляді: <strong>{{ $pendingApplications }}</strong>
@@ -44,6 +46,7 @@
     'schedLocations' => $schedLocations,
     'schedCourses'   => $schedCourses,
     'schedBirthdays' => $schedBirthdays,
+    'schedNotes'     => $schedNotes,
     'canEdit'        => true,
 ])
 

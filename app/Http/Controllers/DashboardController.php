@@ -84,7 +84,21 @@ class DashboardController extends Controller
             ->with('deletionRequest.deletable', 'deletionRequest.requester')
             ->latest()->get();
 
-        $notes = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
+        $notes      = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
+        $schedNotes = $user->notes()->whereNull('recipient_id')->whereNotNull('reminder_time')->get();
+
+        $lessonsNeedingReport = Lesson::with(['course'])
+            ->where(function ($q) use ($user) {
+                $q->where('teacher_id', $user->id)
+                  ->orWhereHas('course.coTeachers', fn($q2) => $q2->where('users.id', $user->id));
+            })
+            ->where(function ($q) {
+                $q->where('date', '<', today())
+                  ->orWhere(fn($q2) => $q2->where('date', today())->where('end_time', '<=', now()->format('H:i:s')));
+            })
+            ->whereNull('completion_status')
+            ->orderBy('date', 'desc')->orderBy('end_time', 'desc')
+            ->limit(10)->get();
 
         $data = [
             'pendingApplications'   => \App\Models\CourseApplication::where('status', 'pending')->count(),
@@ -98,6 +112,8 @@ class DashboardController extends Controller
             'schedCourses'          => $schedCourses,
             'schedBirthdays'        => $schedBirthdays,
             'notes'                 => $notes,
+            'schedNotes'            => $schedNotes,
+            'lessonsNeedingReport'  => $lessonsNeedingReport,
             'adminBanners'          => $adminBanners,
         ];
 
@@ -156,9 +172,10 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        $wallet = $user->getOrCreateWallet();
+        $wallet     = $user->getOrCreateWallet();
         $transactions = $user->transactions()->latest()->limit(10)->get();
-        $notes = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
+        $notes      = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
+        $schedNotes = $user->notes()->whereNull('recipient_id')->whereNotNull('reminder_time')->get();
 
         // Teacher sees: their students + all staff (teachers, admins)
         $studentIds = \App\Models\Course::where('teacher_id', $user->id)
@@ -176,7 +193,7 @@ class DashboardController extends Controller
 
         return view('teacher.dashboard', compact(
             'courses', 'pendingHomework', 'lessonsNeedingReport',
-            'wallet', 'transactions', 'notes',
+            'wallet', 'transactions', 'notes', 'schedNotes',
             'schedDate', 'schedMode', 'schedLessons', 'schedEvents', 'schedLocations', 'schedCourses',
             'schedBirthdays', 'adminBanners'
         ));
@@ -208,15 +225,16 @@ class DashboardController extends Controller
             ->whereDoesntHave('submissions', fn($q) => $q->where('user_id', $user->id)->where('status', 'accepted'))
             ->count();
 
-        $wallet = $user->getOrCreateWallet();
+        $wallet     = $user->getOrCreateWallet();
         $transactions = $user->transactions()->latest()->limit(10)->get();
-        $notes = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
+        $notes      = $user->notes()->whereNull('recipient_id')->latest()->limit(5)->get();
+        $schedNotes = $user->notes()->whereNull('recipient_id')->whereNotNull('reminder_time')->get();
         $receivedNotes = $user->receivedNotes()->with('author')->unread()->get();
         $adminBanners = $user->notifications()->unread()->where('type', 'admin_message')->latest()->get();
 
         return view('student.dashboard', compact(
             'currentCourse', 'pendingHomework', 'totalHomeworkToDo',
-            'wallet', 'transactions', 'notes', 'receivedNotes',
+            'wallet', 'transactions', 'notes', 'schedNotes', 'receivedNotes',
             'schedDate', 'schedMode', 'schedLessons', 'schedEvents',
             'adminBanners'
         ));

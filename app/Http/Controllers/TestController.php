@@ -30,10 +30,16 @@ class TestController extends Controller
             return view('test.index', compact('tests', 'courses'));
         }
 
-        // Student: tests from enrolled courses
+        // Student (and other roles): tests from enrolled courses
         $courseIds = $user->activeEnrollments()->pluck('id');
-        $tests = Test::whereIn('course_id', $courseIds)->with(['course'])->get();
-        $attempts = $user->testAttempts()->whereIn('test_id', $tests->pluck('id'))->latest()->get()->groupBy('test_id');
+        $tests = $courseIds->isEmpty()
+            ? collect()
+            : Test::whereIn('course_id', $courseIds)->with(['course'])->get();
+
+        $testIds = $tests->pluck('id');
+        $attempts = $testIds->isEmpty()
+            ? collect()
+            : $user->testAttempts()->whereIn('test_id', $testIds)->latest()->get()->groupBy('test_id');
 
         return view('test.index', compact('tests', 'attempts'));
     }

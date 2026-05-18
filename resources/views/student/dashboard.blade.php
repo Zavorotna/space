@@ -24,6 +24,7 @@
     'schedMode'    => $schedMode,
     'schedLessons' => $schedLessons,
     'schedEvents'  => $schedEvents,
+    'schedNotes'   => $schedNotes,
     'canEdit'      => false,
 ])
 
