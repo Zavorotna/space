@@ -119,6 +119,10 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
         // Course enrollment
         Route::post('/courses/{course}/apply', [CourseController::class, 'apply'])->name('courses.apply');
         Route::get('/courses/{course}/student', [CourseController::class, 'studentShow'])->name('courses.student.show');
+        Route::get('/applications/{application}', [CourseController::class, 'showApplication'])->name('teacher.applications.show');
+        Route::post('/applications/{application}/join-existing', [CourseController::class, 'joinExistingCourse'])->name('applications.joinExisting');
+        Route::post('/applications/{application}/create-course', [CourseController::class, 'createCourseForApplication'])->name('applications.createCourse');
+        Route::post('/applications/{application}/save-notes', [CourseController::class, 'saveApplicationToNotes'])->name('applications.saveNotes');
         Route::post('/courses/{course}/review', [CourseController::class, 'submitReview'])->name('courses.review');
         Route::get('/courses/{course}/pay', [CourseController::class, 'payForm'])->name('courses.pay');
         Route::post('/courses/{course}/pay', [CourseController::class, 'payProcess'])->name('courses.pay.process');

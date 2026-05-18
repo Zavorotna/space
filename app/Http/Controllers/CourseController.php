@@ -11,7 +11,7 @@ class CourseController extends Controller
     // ── Public pages ───────────────────────────────────────────
 
     /**
-     * Public course listing (group courses only, published)
+     * Public course listing — show published templates only
      */
     public function publicIndex()
     {
@@ -19,8 +19,9 @@ class CourseController extends Controller
             return redirect()->route('teacher.courses.index');
         }
 
-        $courses = Course::published()->group()
-            ->with(['teacher', 'media'])
+        $courses = Course::where('is_template', true)
+            ->where('is_published', true)
+            ->with(['media', 'coTeachers'])
             ->withCount('reviews')
             ->withAvg('reviews', 'rating')
             ->latest()
@@ -30,27 +31,36 @@ class CourseController extends Controller
     }
 
     /**
-     * Public course detail page
+     * Public course detail page (templates)
      */
     public function publicShow(Course $course)
     {
-        if (!$course->is_published || ($course->type === 'individual' && !auth()->check())) {
+        if (!$course->is_published) {
             abort(404);
         }
 
-        $course->load(['teacher', 'reviews' => fn($q) => $q->where('is_approved', true)->with('user'), 'media']);
+        $course->load(['topics', 'reviews' => fn($q) => $q->where('is_approved', true)->with('user'), 'media']);
 
-        return view('public.course-detail', compact('course'));
+        $hasApplication = auth()->check()
+            ? CourseApplication::where('course_id', $course->id)->where('user_id', auth()->id())->where('status', 'pending')->exists()
+            : false;
+
+        return view('public.course-detail', compact('course', 'hasApplication'));
     }
 
     // ── Student actions ────────────────────────────────────────
 
     /**
-     * Apply for a course
+     * Apply for a course (template-based)
      */
     public function apply(Request $request, Course $course)
     {
         $user = $request->user();
+
+        // Require phone number
+        if (!$user->phone) {
+            return back()->with('error', 'Для подачі заявки необхідно вказати номер телефону у профілі.');
+        }
 
         if ($course->students()->where('user_id', $user->id)->exists()) {
             return back()->with('error', 'Ви вже записані на цей курс.');
@@ -60,13 +70,145 @@ class CourseController extends Controller
             return back()->with('error', 'Ваша заявка вже розглядається.');
         }
 
-        CourseApplication::create([
+        $application = CourseApplication::create([
             'course_id' => $course->id,
-            'user_id' => $user->id,
-            'note' => $request->input('note'),
+            'user_id'   => $user->id,
+            'note'      => $request->input('note'),
         ]);
 
+        // Notify all possible teachers (coTeachers of template + main teacher if set)
+        $notifyUsers = $course->coTeachers;
+        if ($course->teacher_id) {
+            $notifyUsers = $notifyUsers->push($course->teacher);
+        }
+        if ($notifyUsers->isEmpty()) {
+            // Fallback: notify all admins
+            $notifyUsers = User::whereIn('role', ['admin', 'superadmin'])->get();
+        }
+
+        $notifyUsers->unique('id')->each(function ($teacher) use ($application, $course, $user) {
+            app(\App\Services\NotificationService::class)->notify(
+                $teacher,
+                'new_application',
+                "Нова заявка на курс «{$course->title}»",
+                "{$user->full_name} хоче приєднатись." . ($application->note ? " Коментар: {$application->note}" : ''),
+                route('teacher.applications.show', $application)
+            );
+        });
+
         return back()->with('success', 'Заявку подано. Очікуйте підтвердження.');
+    }
+
+    /**
+     * Show application detail for teacher (with join/create actions)
+     */
+    public function showApplication(Request $request, CourseApplication $application)
+    {
+        $user = $request->user();
+        $template = $application->course;
+
+        // Teacher must be possible teacher of this template or admin
+        if (!$user->isAdmin()) {
+            $isPossible = $template->coTeachers()->where('user_id', $user->id)->exists()
+                || $template->teacher_id === $user->id;
+            if (!$isPossible) abort(403);
+        }
+
+        $application->load(['user', 'course']);
+
+        // Active courses from this template that teacher can add student to
+        $existingCourses = Course::where('template_id', $template->id)
+            ->where('status', 'active')
+            ->where(function ($q) use ($user) {
+                if (!$user->isAdmin()) {
+                    $q->where('teacher_id', $user->id)
+                      ->orWhereHas('coTeachers', fn($q2) => $q2->where('users.id', $user->id));
+                }
+            })
+            ->get();
+
+        return view('teacher.application-show', compact('application', 'existingCourses'));
+    }
+
+    /**
+     * Join student to existing course (from application)
+     */
+    public function joinExistingCourse(Request $request, CourseApplication $application)
+    {
+        $request->validate(['course_id' => 'required|exists:courses,id']);
+        $course = Course::findOrFail($request->course_id);
+
+        $student = $application->user;
+        $this->attachStudentToCourse($student, $course, $application);
+
+        return redirect()->route('teacher.courses.edit', $course)->with('success', "«{$student->full_name}» додано до курсу.");
+    }
+
+    /**
+     * Create course from template and add student
+     */
+    public function createCourseForApplication(Request $request, CourseApplication $application)
+    {
+        $template = $application->course;
+        $newCourse = $template->duplicateAsTemplate();
+        $newCourse->teacher_id = $request->user()->id;
+        $newCourse->save();
+
+        $this->attachStudentToCourse($application->user, $newCourse, $application);
+
+        return redirect()->route('teacher.courses.edit', $newCourse)->with('success', 'Курс створено і студента додано.');
+    }
+
+    /**
+     * Save application to notes (dismiss notifications without enrolling)
+     */
+    public function saveApplicationToNotes(Request $request, CourseApplication $application)
+    {
+        $user = $request->user();
+        \App\Models\Note::create([
+            'user_id' => $user->id,
+            'content' => "Заявка на курс «{$application->course->title}» від {$application->user->full_name}."
+                . ($application->note ? " Коментар: {$application->note}" : ''),
+        ]);
+
+        $this->dismissApplicationNotifications($application);
+        $application->update(['status' => 'pending']); // keep pending
+
+        return back()->with('success', 'Збережено в замітки.');
+    }
+
+    private function attachStudentToCourse(User $student, Course $course, CourseApplication $application): void
+    {
+        if (!$course->students()->where('user_id', $student->id)->exists()) {
+            $course->students()->attach($student->id, [
+                'status'      => 'active',
+                'enrolled_at' => now(),
+            ]);
+        }
+
+        // Auto-change role registered → student
+        if ($student->role === 'registered') {
+            $student->update(['role' => 'student']);
+        }
+
+        $application->update(['status' => 'approved', 'processed_by' => auth()->id()]);
+        $this->dismissApplicationNotifications($application);
+
+        // Notify student
+        app(\App\Services\NotificationService::class)->notify(
+            $student,
+            'application_approved',
+            "Заявку на курс «{$course->title}» прийнято",
+            'Ви зараховані на курс. Удачі у навчанні!',
+            route('courses.student.show', $course)
+        );
+    }
+
+    private function dismissApplicationNotifications(CourseApplication $application): void
+    {
+        \App\Models\PlatformNotification::where('type', 'new_application')
+            ->where('link', 'LIKE', '%/applications/' . $application->id . '%')
+            ->update(['is_read' => true]);
     }
 
     /**

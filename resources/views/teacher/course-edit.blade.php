@@ -187,8 +187,50 @@
 
 <hr>
 
-@if(!$course->is_template)
 {{-- ══ TEACHERS SECTION ══ --}}
+@if($course->is_template)
+{{-- Template: show possible teachers who can teach this course --}}
+<h2>Можливі викладачі</h2>
+<p class="text-sm text-muted">Ці викладачі отримуватимуть заявки студентів на цей курс.</p>
+<div class="card-panel">
+    @if($course->coTeachers->count())
+    @foreach($course->coTeachers as $coTeacher)
+    <div class="flex-between mb-1">
+        <span>{{ $coTeacher->last_name }} {{ $coTeacher->first_name }}</span>
+        @if(auth()->user()->isAdmin())
+        <form method="POST" action="{{ route('teacher.courses.coTeachers.remove', [$course, $coTeacher]) }}" class="form-inline">
+            @csrf @method('DELETE')
+            <button type="submit" onclick="return confirm('Видалити?')" class="btn btn-xs btn-danger">×</button>
+        </form>
+        @endif
+    </div>
+    @endforeach
+    @else
+    <p class="text-muted text-sm">Жодного викладача не додано — заявки отримають адміністратори.</p>
+    @endif
+
+    @if(auth()->user()->isAdmin())
+    <button type="button" class="btn btn-sm btn-ghost mt-1"
+            onclick="this.style.display='none';document.getElementById('coteacher-form').style.display='block'">
+        + Додати викладача
+    </button>
+    <div id="coteacher-form" style="display:none;" class="mt-1">
+        <form method="POST" action="{{ route('teacher.courses.coTeachers.add', $course) }}" class="flex-row">
+            @csrf
+            <select name="user_id" required>
+                <option value="">— Оберіть —</option>
+                @foreach($teachers->filter(fn($t) => !$course->coTeachers->contains($t->id)) as $t)
+                <option value="{{ $t->id }}">{{ $t->last_name }} {{ $t->first_name }} ({{ $t->role }})</option>
+                @endforeach
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Додати</button>
+        </form>
+    </div>
+    @endif
+</div>
+
+@else
+{{-- Regular course: main teacher + co-teachers --}}
 <h2>Викладачі</h2>
 <div class="card-panel">
     @if(auth()->user()->isAdmin())
@@ -248,6 +290,7 @@
     </div>
     @endif
 </div>
+@endif
 
 <hr>
 
