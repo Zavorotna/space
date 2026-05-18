@@ -10,6 +10,7 @@
 @if($pendingApplications > 0)
 <p class="mb-1">
     Заявок на розгляді: <strong>{{ $pendingApplications }}</strong>
+    — <a href="{{ route('teacher.courses.index') }}">Переглянути шаблони</a>
 </p>
 @endif
 

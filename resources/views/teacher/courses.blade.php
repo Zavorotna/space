@@ -23,21 +23,38 @@
                 <th>Назва</th>
                 <th>Тип</th>
                 <th>Ціна</th>
+                <th>Статус</th>
                 @if(auth()->user()->isAdmin()) <th>Викладач</th> @endif
                 <th>Дії</th>
             </tr>
         </thead>
         <tbody>
         @foreach($templates as $course)
+            @php $pendingCount = $course->applications()->where('status', 'pending')->count(); @endphp
             <tr>
                 <td>{{ $course->title }}</td>
                 <td>{{ $course->type === 'group' ? 'Груповий' : 'Індивідуальний' }}</td>
                 <td>{{ $course->price }} грн</td>
+                <td>
+                    @if($course->is_published)
+                        <span class="text-success">Опублікований</span>
+                    @else
+                        <span class="text-muted">Чернетка</span>
+                    @endif
+                    @if($pendingCount > 0)
+                        <br><a href="{{ route('teacher.courses.applications', $course) }}" class="text-sm text-warn">
+                            {{ $pendingCount }} заявок
+                        </a>
+                    @endif
+                </td>
                 @if(auth()->user()->isAdmin())
                     <td>{{ $course->teacher?->full_name ?? '—' }}</td>
                 @endif
                 <td>
                     <a href="{{ route('teacher.courses.edit', $course) }}">Редагувати</a>
+                    @if($pendingCount > 0)
+                        <a href="{{ route('teacher.courses.applications', $course) }}">Заявки ({{ $pendingCount }})</a>
+                    @endif
                     <form method="POST" action="{{ route('teacher.courses.duplicate', $course) }}" class="form-inline"
                           onsubmit="this.querySelector('button').disabled = true">
                         @csrf
