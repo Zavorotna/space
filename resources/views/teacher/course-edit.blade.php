@@ -331,6 +331,7 @@
 <p class="text-muted text-sm">Студентів ще немає.</p>
 @endif
 
+@if(!$course->is_template)
 <h3 class="mt-2">Додати студента</h3>
 <form method="POST" action="{{ route('teacher.courses.addStudent', $course) }}" class="flex-row">
     @csrf
