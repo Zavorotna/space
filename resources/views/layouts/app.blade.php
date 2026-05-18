@@ -118,7 +118,15 @@
     @yield('content')
 </main>
 
-<footer></footer>
+<footer>
+    <div class="footer-legal">
+        <a href="{{ route('legal') }}">Публічна оферта</a>
+        <span>·</span>
+        <a href="{{ route('legal') }}?tab=privacy">Політика конфіденційності</a>
+        <span>·</span>
+        <a href="{{ route('legal') }}?tab=refund">Умови повернення</a>
+    </div>
+</footer>
 
 <script>
     window.csrfToken = '{{ csrf_token() }}';

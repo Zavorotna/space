@@ -51,6 +51,9 @@ Route::delete('/profile/google', [GoogleController::class, 'unlinkGoogle'])->nam
 Route::get('/auth/google/claim', [GoogleController::class, 'showClaimForm'])->name('auth.google.claim');
 Route::post('/auth/google/claim', [GoogleController::class, 'processClaim'])->name('auth.google.claim.process');
 
+// ── Legal ──────────────────────────────────────────────────────
+Route::get('/legal', fn() => view('public.legal'))->name('legal');
+
 // ── LiqPay Callback (no auth, server-to-server) ───────────────
 Route::post('/liqpay/callback', [LiqPayCallbackController::class, 'handle'])->name('liqpay.callback');
 
