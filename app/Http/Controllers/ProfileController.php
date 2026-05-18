@@ -58,7 +58,7 @@ class ProfileController extends Controller
 
         $validated = $request->validate($rules);
 
-        $data = collect($validated)->except('avatar')->toArray();
+        $data = collect($validated)->except(['avatar', 'role', 'is_vip', 'login_streak'])->toArray();
 
         // If birthday already exists, never overwrite it
         if ($user->birthday) {

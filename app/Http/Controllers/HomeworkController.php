@@ -13,6 +13,7 @@ class HomeworkController extends Controller
 
     public function store(Request $request, Course $course)
     {
+        $this->authorizeCourseTeacher($course);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -36,6 +37,7 @@ class HomeworkController extends Controller
 
     public function update(Request $request, HomeworkAssignment $homework)
     {
+        $this->authorizeCourseTeacher($homework->course);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -51,8 +53,18 @@ class HomeworkController extends Controller
 
     public function destroy(HomeworkAssignment $homework)
     {
+        $this->authorizeCourseTeacher($homework->course);
         $homework->delete();
         return back()->with('success', 'Завдання видалено.');
+    }
+
+    private function authorizeCourseTeacher(\App\Models\Course $course): void
+    {
+        $user = auth()->user();
+        if ($user->isAdmin()) return;
+        if ($user->isTeacher() && $course->teacher_id === $user->id) return;
+        if ($user->isTeacher() && $course->coTeachers()->where('user_id', $user->id)->exists()) return;
+        abort(403);
     }
 
     // ── Student: submit homework ───────────────────────────────

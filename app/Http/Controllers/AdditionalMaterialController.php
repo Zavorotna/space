@@ -10,6 +10,11 @@ class AdditionalMaterialController extends Controller
 {
     public function store(Request $request, Course $course)
     {
+        $user = $request->user();
+        if (!$user->isAdmin() && $course->teacher_id !== $user->id
+            && !$course->coTeachers()->where('user_id', $user->id)->exists()) {
+            abort(403);
+        }
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',

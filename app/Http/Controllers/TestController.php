@@ -109,6 +109,7 @@ class TestController extends Controller
      */
     public function addQuestion(Request $request, Test $test)
     {
+        $this->authorizeTest($test);
         $validated = $request->validate([
             'text' => 'required|string',
             'type' => 'required|in:single,multiple',
@@ -138,6 +139,7 @@ class TestController extends Controller
 
     public function updateQuestion(Request $request, TestQuestion $question)
     {
+        $this->authorizeTest($question->test);
         $validated = $request->validate([
             'text' => 'required|string',
             'type' => 'required|in:single,multiple',
@@ -180,6 +182,7 @@ class TestController extends Controller
 
     public function deleteQuestion(TestQuestion $question)
     {
+        $this->authorizeTest($question->test);
         $question->delete();
         return back()->with('success', 'Питання видалено.');
     }

@@ -337,6 +337,10 @@ class ScheduleController extends Controller
 
     public function destroyEvent(CalendarEvent $event)
     {
+        $user = auth()->user();
+        if (!$user->isAdmin() && $event->created_by !== $user->id) {
+            abort(403);
+        }
         $event->delete();
         return back()->with('success', 'Подію видалено.');
     }

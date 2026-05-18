@@ -15,11 +15,12 @@ class Course extends Model implements HasMedia
     protected $fillable = [
         'title', 'description', 'program', 'teacher_id', 'price', 'billing_period',
         'status', 'type', 'start_date', 'end_date', 'telegram_link',
-        'liqpay_merchant_id', 'liqpay_private_key', 'has_graduation_project',
-        'template_id', 'is_published', 'is_template',
+        'has_graduation_project', 'template_id', 'is_published', 'is_template',
         'schedule_days', 'schedule_times', 'schedule_start_time', 'schedule_end_time',
         'schedule_mode', 'schedule_location_id', 'schedule_classroom_id',
     ];
+
+    protected $hidden = ['liqpay_merchant_id', 'liqpay_private_key'];
 
     protected function casts(): array
     {
