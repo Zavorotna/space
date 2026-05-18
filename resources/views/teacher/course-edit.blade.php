@@ -388,11 +388,11 @@
     <div>
         <strong>{{ $test->title }}</strong>
         <span class="text-muted text-sm">({{ $test->questions->count() }} питань, {{ $test->passing_score }}%)</span>
-        <a href="{{ route('tests.edit', $test) }}" class="text-sm">Ред.</a>
-        <a href="{{ route('tests.statistics', $test) }}" class="text-sm">Стат.</a>
+        <a href="{{ route('teacher.tests.edit', $test) }}" class="text-sm">Ред.</a>
+        <a href="{{ route('teacher.tests.statistics', $test) }}" class="text-sm">Стат.</a>
     </div>
     @if($course->topics->count())
-    <form method="POST" action="{{ route('tests.update', $test) }}" class="flex-row">
+    <form method="POST" action="{{ route('teacher.tests.update', $test) }}" class="flex-row">
         @csrf @method('PUT')
         <input type="hidden" name="title" value="{{ $test->title }}">
         <input type="hidden" name="description" value="{{ $test->description ?? '' }}">
