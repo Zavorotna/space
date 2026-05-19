@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Hashtag#Space" [ref=e4] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua
+  - main [ref=e5]:
+    - link "← Всі курси" [ref=e6] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/courses
+    - heading "SEO" [level=1] [ref=e7]
+    - paragraph [ref=e8]: Просування в органічній видачі Google.
+    - heading "Програма курсу" [level=2] [ref=e9]
+    - list [ref=e10]:
+      - listitem [ref=e11]: Різниця між SEO та PPC
+      - listitem [ref=e12]: Історія розвитку пошукових алгоритмів
+    - generic [ref=e13]:
+      - strong [ref=e14]: "Вартість:"
+      - text: 3 800 грн / місяць
+    - generic [ref=e15]:
+      - link "Зареєструватись та подати заявку" [ref=e16] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/register
+      - link "Увійти" [ref=e17] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/login
+  - contentinfo [ref=e18]:
+    - generic [ref=e19]:
+      - link "Публічна оферта" [ref=e20] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/legal
+      - generic [ref=e21]: ·
+      - link "Політика конфіденційності" [ref=e22] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/legal?tab=privacy
+      - generic [ref=e23]: ·
+      - link "Умови повернення" [ref=e24] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/legal?tab=refund

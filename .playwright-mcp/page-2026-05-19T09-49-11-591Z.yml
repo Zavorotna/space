@@ -1,0 +1,70 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Меню" [ref=e4] [cursor=pointer]
+      - link "Hashtag#Space" [ref=e8] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua
+    - generic [ref=e9]:
+      - link "◈ 10" [ref=e10] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/wallet
+        - generic [ref=e11]: ◈
+        - generic [ref=e12]: "10"
+      - link "Сповіщення" [ref=e13] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/notifications
+        - img [ref=e14]
+  - navigation [ref=e17]:
+    - link "Дашборд" [ref=e18] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/dashboard
+    - link "Курси" [ref=e19] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/teacher/courses
+    - link "Магазин" [ref=e20] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/shop
+    - link "Тести" [ref=e21] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/tests
+    - link "Розклад" [ref=e22] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/schedule
+    - link "Профіль" [ref=e23] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/profile/edit
+    - separator [ref=e24]
+    - generic [ref=e25]: Адміністрація
+    - link "Користувачі" [ref=e26] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/admin/users
+    - link "Локації та аудиторії" [ref=e27] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/admin/locations
+    - link "Управління магазином" [ref=e28] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/admin/shop
+    - link "Заняття" [ref=e29] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/superadmin/lesson-stats
+    - link "Всі транзакції" [ref=e30] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/superadmin/transactions
+    - separator [ref=e31]
+    - button "Вийти" [ref=e33] [cursor=pointer]
+  - main [ref=e34]:
+    - link "← Всі курси" [ref=e35] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/courses
+    - heading "SEO" [level=1] [ref=e36]
+    - paragraph [ref=e37]: Просування в органічній видачі Google.
+    - heading "Програма курсу" [level=2] [ref=e38]
+    - list [ref=e39]:
+      - listitem [ref=e40]: Різниця між SEO та PPC
+      - listitem [ref=e41]: Історія розвитку пошукових алгоритмів
+    - generic [ref=e42]:
+      - strong [ref=e43]: "Вартість:"
+      - text: 3 800 грн / місяць
+    - generic [ref=e44]:
+      - heading "Подати заявку" [level=2] [ref=e45]
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e48]: Коментар (необов'язково)
+          - textbox "Розкажіть трохи про себе, ваш досвід..." [ref=e49]
+        - button "Подати заявку" [ref=e50] [cursor=pointer]
+  - contentinfo [ref=e51]:
+    - generic [ref=e52]:
+      - link "Публічна оферта" [ref=e53] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/legal
+      - generic [ref=e54]: ·
+      - link "Політика конфіденційності" [ref=e55] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/legal?tab=privacy
+      - generic [ref=e56]: ·
+      - link "Умови повернення" [ref=e57] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/legal?tab=refund

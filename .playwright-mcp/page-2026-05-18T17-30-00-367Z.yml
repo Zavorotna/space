@@ -1,0 +1,147 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Меню" [ref=e4] [cursor=pointer]
+      - link "Hashtag#Space" [ref=e8] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua
+    - generic [ref=e9]:
+      - link "◈ 10" [ref=e10] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/wallet
+        - generic [ref=e11]: ◈
+        - generic [ref=e12]: "10"
+      - link "Сповіщення" [ref=e13] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/notifications
+        - img [ref=e14]
+  - navigation [ref=e17]:
+    - link "Дашборд" [ref=e18] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/dashboard
+    - link "Курси" [ref=e19] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/teacher/courses
+    - link "Магазин" [ref=e20] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/shop
+    - link "Тести" [ref=e21] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/tests
+    - link "Розклад" [ref=e22] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/schedule
+    - link "Профіль" [ref=e23] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/profile/edit
+    - separator [ref=e24]
+    - generic [ref=e25]: Адміністрація
+    - link "Користувачі" [ref=e26] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/admin/users
+    - link "Локації та аудиторії" [ref=e27] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/admin/locations
+    - link "Управління магазином" [ref=e28] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/admin/shop
+    - link "Заняття" [ref=e29] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/superadmin/lesson-stats
+    - link "Всі транзакції" [ref=e30] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua/superadmin/transactions
+    - separator [ref=e31]
+    - button "Вийти" [ref=e33] [cursor=pointer]
+  - main [ref=e34]:
+    - 'heading "Редагування шаблону: SEO" [level=1] [ref=e35]'
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - generic [ref=e38]: Назва
+        - textbox [ref=e39]: SEO
+      - generic [ref=e40]:
+        - generic [ref=e41]: Опис
+        - textbox [ref=e42]: Просування в органічній видачі Google.
+      - generic [ref=e43]:
+        - generic [ref=e44]: Теми курсу
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - generic [ref=e47]: "1."
+            - textbox "Назва теми" [ref=e48]: Різниця між SEO та PPC
+            - button "×" [ref=e49] [cursor=pointer]
+          - generic [ref=e50]:
+            - generic [ref=e51]: "2."
+            - textbox "Назва теми" [ref=e52]: Історія розвитку пошукових алгоритмів
+            - button "×" [ref=e53] [cursor=pointer]
+        - button "+ Додати тему" [ref=e54] [cursor=pointer]
+      - generic [ref=e55]:
+        - generic [ref=e56]: Ціна (грн)
+        - spinbutton [ref=e57]: "3800.00"
+      - generic [ref=e58]:
+        - generic [ref=e59]: Період оплати
+        - combobox [ref=e60] [cursor=pointer]:
+          - option "Щомісячно" [selected]
+          - option "Разово"
+          - option "За заняття"
+      - generic [ref=e61]:
+        - generic [ref=e62]: Тип
+        - combobox [ref=e63] [cursor=pointer]:
+          - option "Груповий" [selected]
+          - option "Індивідуальний"
+      - generic [ref=e64]:
+        - generic [ref=e65]: Формат
+        - combobox [ref=e66] [cursor=pointer]:
+          - option "Онлайн" [selected]
+          - option "Офлайн"
+      - generic [ref=e68]:
+        - checkbox "Опубліковано (відображається студентам у каталозі)" [checked] [active] [ref=e69]
+        - text: Опубліковано (відображається студентам у каталозі)
+      - generic [ref=e70]:
+        - generic [ref=e71]: Фото
+        - button "Choose File" [ref=e72]
+      - separator [ref=e73]
+      - heading "Розклад занять" [level=3] [ref=e74]
+      - paragraph [ref=e75]: Зміна розкладу видалить майбутні незаплановані заняття і перегенерує від сьогодні.
+      - generic [ref=e77]:
+        - checkbox "Пн" [ref=e78]
+        - text: Пн
+      - generic [ref=e80]:
+        - checkbox "Вт" [ref=e81]
+        - text: Вт
+      - generic [ref=e83]:
+        - checkbox "Ср" [ref=e84]
+        - text: Ср
+      - generic [ref=e86]:
+        - checkbox "Чт" [ref=e87]
+        - text: Чт
+      - generic [ref=e89]:
+        - checkbox "Пт" [ref=e90]
+        - text: Пт
+      - generic [ref=e92]:
+        - checkbox "Сб" [ref=e93]
+        - text: Сб
+      - generic [ref=e95]:
+        - checkbox "Нд" [ref=e96]
+        - text: Нд
+      - button "Зберегти" [ref=e97] [cursor=pointer]
+    - generic [ref=e98]:
+      - button "Скопіювати як шаблон" [ref=e100] [cursor=pointer]
+      - button "Видалити курс" [ref=e102] [cursor=pointer]
+    - separator [ref=e103]
+    - heading "Можливі викладачі" [level=2] [ref=e104]
+    - paragraph [ref=e105]: Ці викладачі отримуватимуть заявки студентів на цей курс.
+    - generic [ref=e106]:
+      - paragraph [ref=e107]: Жодного викладача не додано — заявки отримають адміністратори.
+      - button "+ Додати викладача" [ref=e108] [cursor=pointer]
+    - separator [ref=e109]
+    - generic [ref=e110]:
+      - heading "Студенти (0)" [level=2] [ref=e111]
+      - link "Заявки" [ref=e112] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/teacher/courses/4/applications
+    - paragraph [ref=e113]: Студентів ще немає.
+    - separator [ref=e114]
+    - generic [ref=e115]:
+      - heading "Домашні завдання" [level=2] [ref=e116]
+      - button "+ Додати ДЗ" [ref=e117] [cursor=pointer]
+    - separator [ref=e118]
+    - generic [ref=e119]:
+      - heading "Тести" [level=2] [ref=e120]
+      - link "+ Новий тест" [ref=e121] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/tests
+    - paragraph [ref=e122]:
+      - text: Тестів ще немає.
+      - link "Створити на сторінці тестів →" [ref=e123] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/tests
+    - separator [ref=e124]
+    - heading "Випускний проєкт" [level=2] [ref=e126]
+    - button "+ Додати випускний проєкт" [ref=e127] [cursor=pointer]
+    - separator [ref=e128]
+    - generic [ref=e129]:
+      - heading "Додаткові матеріали" [level=2] [ref=e130]
+      - button "+ Додати матеріал" [ref=e131] [cursor=pointer]

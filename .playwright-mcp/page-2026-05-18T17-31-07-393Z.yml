@@ -1,0 +1,15 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Hashtag#Space" [ref=e4] [cursor=pointer]:
+      - /url: https://space.hashtag.net.ua
+  - main [ref=e5]:
+    - heading "Курси" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Оберіть напрям — подайте заявку — ми підберемо зручний час і групу.
+    - generic [ref=e9]:
+      - heading "SEO" [level=2] [ref=e10]:
+        - link "SEO" [ref=e11] [cursor=pointer]:
+          - /url: https://space.hashtag.net.ua/courses/4/detail
+      - paragraph [ref=e12]: Просування в органічній видачі Google.
+      - generic [ref=e13]: 3 800 грн / місяць
+      - link "Детальніше" [ref=e14] [cursor=pointer]:
+        - /url: https://space.hashtag.net.ua/courses/4/detail

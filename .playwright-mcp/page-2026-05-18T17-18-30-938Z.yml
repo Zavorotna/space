@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - progressbar [ref=e6]
+      - main [ref=e84]:
+        - generic [ref=e85]:
+          - generic [ref=e88]:
+            - img [ref=e90]
+            - generic [ref=e95]: Sign in with Google
+          - generic [ref=e96]:
+            - heading "Welcome" [level=1] [ref=e97]
+            - generic [ref=e101]:
+              - img [ref=e103]
+              - generic [ref=e106]: pirogok1988@gmail.com
+        - generic [ref=e112]:
+          - heading "Verifying it’s you..." [level=2] [ref=e114]:
+            - generic [ref=e115]: Verifying it’s you...
+          - generic [ref=e118]: Complete sign-in using your passkey
+        - button "Try another way" [ref=e124] [cursor=pointer]:
+          - generic [ref=e127]: Try another way
+    - contentinfo [ref=e69]:
+      - combobox "Change language English (United States)" [ref=e73] [cursor=pointer]:
+        - generic:
+          - generic: English (United States)
+        - generic:
+          - img
+      - list [ref=e75]:
+        - listitem [ref=e76]:
+          - link "Help" [ref=e77] [cursor=pointer]:
+            - /url: https://support.google.com/accounts?hl=en-US&p=account_iph
+        - listitem [ref=e78]:
+          - link "Privacy" [ref=e79] [cursor=pointer]:
+            - /url: https://accounts.google.com/TOS?loc=UA&hl=en-US&privacy=true
+        - listitem [ref=e80]:
+          - link "Terms" [ref=e81] [cursor=pointer]:
+            - /url: https://accounts.google.com/TOS?loc=UA&hl=en-US
+  - iframe [ref=e82]:
+    
+  - generic [ref=e130]: Welcome
