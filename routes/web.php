@@ -29,7 +29,7 @@ use App\Http\Controllers\Auth\{RegisterController, LoginController, GoogleContro
 // ═══════════════════════════════════════════════════════════════
 Route::get('/', function () {
     if (auth()->check()) return redirect()->route('dashboard');
-    return view('public.home');
+    return redirect()->route('login');
 })->name('home');
 
 // ── Auth ───────────────────────────────────────────────────────
@@ -57,14 +57,13 @@ Route::get('/legal', fn() => view('public.legal'))->name('legal');
 // ── LiqPay Callback (no auth, server-to-server) ───────────────
 Route::post('/liqpay/callback', [LiqPayCallbackController::class, 'handle'])->name('liqpay.callback');
 
-// ── Public pages ───────────────────────────────────────────────
-Route::get('/courses', [CourseController::class, 'publicIndex'])->name('courses.public');
-Route::get('/courses/{course}/detail', [CourseController::class, 'publicShow'])->name('courses.detail');
-
 // ═══════════════════════════════════════════════════════════════
 // AUTHENTICATED (all roles)
 // ═══════════════════════════════════════════════════════════════
 Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group(function () {
+
+    Route::get('/courses', [CourseController::class, 'publicIndex'])->name('courses.public');
+    Route::get('/courses/{course}/detail', [CourseController::class, 'publicShow'])->name('courses.detail');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

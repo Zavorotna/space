@@ -29,40 +29,33 @@
     / {{ ['monthly' => 'місяць', 'one_time' => 'разово', 'per_lesson' => 'заняття'][$course->billing_period] ?? '' }}
 </div>
 
-@auth
-    @if(auth()->user()->isTeacher() || auth()->user()->isAdmin())
-    {{-- Teachers and admins don't apply to courses --}}
-    @elseif($isEnrolled)
-    <div style="padding:14px;background:#e8f5e9;border-radius:8px;margin:16px 0;">
-        ✅ Ви вже записані на цей курс.
-    </div>
-    @elseif($hasApplication)
-    <div style="padding:14px;background:#e8f5e9;border-radius:8px;margin:16px 0;">
-        ✅ Вашу заявку прийнято. Ми зв'яжемось з вами найближчим часом.
-    </div>
-    @elseif(!auth()->user()->phone)
-    <div style="padding:14px;background:#fff3e0;border-radius:8px;margin:16px 0;">
-        ⚠️ Для подачі заявки вкажіть <a href="{{ route('profile.edit') }}">номер телефону у профілі</a>.
-    </div>
-    @else
-    <div style="margin:20px 0;">
-        <h2>Подати заявку</h2>
-        <form method="POST" action="{{ route('courses.apply', $course) }}">
-            @csrf
-            <div class="form-group">
-                <label>Коментар (необов'язково)</label>
-                <textarea name="note" rows="3" placeholder="Розкажіть трохи про себе, ваш досвід..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Подати заявку</button>
-        </form>
-    </div>
-    @endif
+@if(auth()->user()->isTeacher() || auth()->user()->isAdmin())
+{{-- Teachers and admins don't apply to courses --}}
+@elseif($isEnrolled)
+<div style="padding:14px;background:#e8f5e9;border-radius:8px;margin:16px 0;">
+    ✅ Ви вже записані на цей курс.
+</div>
+@elseif($hasApplication)
+<div style="padding:14px;background:#e8f5e9;border-radius:8px;margin:16px 0;">
+    ✅ Вашу заявку прийнято. Ми зв'яжемось з вами найближчим часом.
+</div>
+@elseif(!auth()->user()->phone)
+<div style="padding:14px;background:#fff3e0;border-radius:8px;margin:16px 0;">
+    ⚠️ Для подачі заявки вкажіть <a href="{{ route('profile.edit') }}">номер телефону у профілі</a>.
+</div>
 @else
 <div style="margin:20px 0;">
-    <a href="{{ route('register') }}" class="btn btn-primary">Зареєструватись та подати заявку</a>
-    <a href="{{ route('login') }}" class="btn btn-ghost">Вже є акаунт? Увійти</a>
+    <h2>Подати заявку</h2>
+    <form method="POST" action="{{ route('courses.apply', $course) }}">
+        @csrf
+        <div class="form-group">
+            <label>Коментар (необов'язково)</label>
+            <textarea name="note" rows="3" placeholder="Розкажіть трохи про себе, ваш досвід..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Подати заявку</button>
+    </form>
 </div>
-@endauth
+@endif
 
 @if($course->reviews->count())
 <h2>Відгуки</h2>
