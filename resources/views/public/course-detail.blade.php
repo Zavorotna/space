@@ -30,7 +30,13 @@
 </div>
 
 @auth
-    @if($hasApplication)
+    @if(auth()->user()->isTeacher() || auth()->user()->isAdmin())
+    {{-- Teachers and admins don't apply to courses --}}
+    @elseif($isEnrolled)
+    <div style="padding:14px;background:#e8f5e9;border-radius:8px;margin:16px 0;">
+        ✅ Ви вже записані на цей курс.
+    </div>
+    @elseif($hasApplication)
     <div style="padding:14px;background:#e8f5e9;border-radius:8px;margin:16px 0;">
         ✅ Вашу заявку прийнято. Ми зв'яжемось з вами найближчим часом.
     </div>
@@ -54,7 +60,7 @@
 @else
 <div style="margin:20px 0;">
     <a href="{{ route('register') }}" class="btn btn-primary">Зареєструватись та подати заявку</a>
-    <a href="{{ route('login') }}" class="btn btn-ghost">Увійти</a>
+    <a href="{{ route('login') }}" class="btn btn-ghost">Вже є акаунт? Увійти</a>
 </div>
 @endauth
 

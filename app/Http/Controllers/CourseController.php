@@ -41,11 +41,14 @@ class CourseController extends Controller
 
         $course->load(['topics', 'reviews' => fn($q) => $q->where('is_approved', true)->with('user'), 'media']);
 
-        $hasApplication = auth()->check()
-            ? CourseApplication::where('course_id', $course->id)->where('user_id', auth()->id())->where('status', 'pending')->exists()
-            : false;
+        $hasApplication = false;
+        $isEnrolled = false;
+        if (auth()->check()) {
+            $hasApplication = CourseApplication::where('course_id', $course->id)->where('user_id', auth()->id())->where('status', 'pending')->exists();
+            $isEnrolled = $course->students()->where('user_id', auth()->id())->exists();
+        }
 
-        return view('public.course-detail', compact('course', 'hasApplication'));
+        return view('public.course-detail', compact('course', 'hasApplication', 'isEnrolled'));
     }
 
     // ── Student actions ────────────────────────────────────────

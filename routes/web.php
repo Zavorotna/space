@@ -111,13 +111,15 @@ Route::middleware(['auth', \App\Http\Middleware\TrackLoginStreak::class])->group
     // ── Achievements ───────────────────────────────────────────
     Route::get('/achievements', [AchievementController::class, 'index'])->name('achievements.index');
 
+    // ── Course application (all authenticated roles can apply) ──
+    Route::post('/courses/{course}/apply', [CourseController::class, 'apply'])->name('courses.apply');
+
     // ═════════════════════════════════════════════════════════
     // STUDENT routes
     // ═════════════════════════════════════════════════════════
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':student,teacher,admin,superadmin')->group(function () {
 
         // Course enrollment
-        Route::post('/courses/{course}/apply', [CourseController::class, 'apply'])->name('courses.apply');
         Route::get('/courses/{course}/student', [CourseController::class, 'studentShow'])->name('courses.student.show');
         Route::get('/applications/{application}', [CourseController::class, 'showApplication'])->name('teacher.applications.show');
         Route::post('/applications/{application}/join-existing', [CourseController::class, 'joinExistingCourse'])->name('applications.joinExisting');
